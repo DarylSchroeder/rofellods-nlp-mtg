@@ -4,6 +4,7 @@ class MTGSearch {
         this.currentQuery = '';
         this.currentPage = 1;
         this.perPage = 20;
+        this.currentFormat = 'ALL'; // Add format tracking
         this.viewMode = 'tiles'; // 'tiles' or 'text'
         this.lastScryfallCall = null; // Cache latest Scryfall API call for bug reports
         
@@ -18,6 +19,7 @@ class MTGSearch {
         }
         this.initializeElements();
         this.loadStateFromURL();
+        this.initializeFormatSelector();
         this.bindEvents();
         
         // If we have a query from URL, perform search automatically
@@ -35,6 +37,12 @@ class MTGSearch {
         if (query) {
             this.currentQuery = decodeURIComponent(query);
             this.searchInput.value = this.currentQuery;
+        }
+        
+        // Load format
+        const format = urlParams.get('format');
+        if (format && ['ALL', 'standard', 'commander', 'modern', 'pioneer', 'legacy', 'pauper'].includes(format)) {
+            this.currentFormat = format;
         }
         
         // Load view mode
@@ -65,6 +73,10 @@ class MTGSearch {
             params.set('q', encodeURIComponent(this.currentQuery));
         }
         
+        if (this.currentFormat !== 'ALL') {
+            params.set('format', this.currentFormat);
+        }
+        
         if (this.viewMode !== 'tiles') {
             params.set('view', this.viewMode);
         }
@@ -92,9 +104,17 @@ class MTGSearch {
         }
     }
 
+    // Initialize format selector with current value
+    initializeFormatSelector() {
+        if (this.formatSelect) {
+            this.formatSelect.value = this.currentFormat;
+        }
+    }
+
     initializeElements() {
         this.searchInput = document.getElementById('searchInput');
         this.searchButton = document.getElementById('searchButton');
+        this.formatSelect = document.getElementById('formatSelect');
         this.loading = document.getElementById('loading');
         this.results = document.getElementById('results');
         this.cardResults = document.getElementById('cardResults');
@@ -109,6 +129,12 @@ class MTGSearch {
             if (e.key === 'Enter') {
                 this.performSearch();
             }
+        });
+
+        // Format selector change event
+        this.formatSelect.addEventListener('change', () => {
+            this.currentFormat = this.formatSelect.value;
+            this.performSearch(1); // Reset to page 1 when format changes
         });
 
         // Focus on search input when page loads (unless we have a query from URL)
@@ -154,8 +180,14 @@ class MTGSearch {
         this.hideAllSections();
 
         try {
+            // Modify query to include format if not ALL
+            let searchQuery = query;
+            if (this.currentFormat !== 'ALL') {
+                searchQuery = `${query} format:${this.currentFormat}`;
+            }
+            
             const params = new URLSearchParams({
-                prompt: query,
+                prompt: searchQuery,
                 page: page.toString(),
                 per_page: this.perPage.toString()
             });
