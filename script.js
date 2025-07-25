@@ -163,6 +163,14 @@ class MTGSearch {
             const response = await fetch(`${this.apiUrl}?${params}`);
             const data = await response.json();
             
+            // Log NLP parameters to console for debugging
+            console.group(`🔍 Search: "${query}"`);
+            console.log('📝 Original Query:', query);
+            console.log('🧠 NLP Parsed Filters:', data.filters || {});
+            console.log('🔎 Scryfall Query:', data.scryfall_query || 'N/A');
+            console.log('📊 Results Count:', data.pagination?.total_results || 0);
+            console.groupEnd();
+            
             // Cache the API call info for bug reports
             this.lastScryfallCall = {
                 timestamp: new Date().toISOString(),
@@ -183,18 +191,20 @@ class MTGSearch {
             this.hideLoading();
 
             if (data.error) {
+                console.warn('❌ API Error:', data.error);
                 this.showError(data.error);
                 return;
             }
 
             if (!data.results || data.results.length === 0) {
+                console.log('🚫 No results found for query');
                 this.showNoResults();
                 return;
             }
 
             this.displayResults(data.results, data.pagination, query);
         } catch (error) {
-            console.error('Search error:', error);
+            console.error('💥 Search error:', error);
             this.hideLoading();
             this.showError('Failed to search. Please try again.');
         }
@@ -788,7 +798,6 @@ ${scryfallInfo}
                 'X cost spell'
             ],
             'Guild Colors': [
-                'azorius:only removal',
                 'azorius counterspell',
                 'simic ramp',
                 'rakdos removal',
