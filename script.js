@@ -612,6 +612,7 @@ class MTGSearch {
 
     generateSearchIssueBody(query, page) {
         const timestamp = new Date().toISOString();
+        const reproductionUrl = window.location.href;
         
         let scryfallInfo = '';
         if (this.lastScryfallCall) {
@@ -619,7 +620,7 @@ class MTGSearch {
 
 ### Scryfall API Call Debug Info
 **Timestamp:** ${this.lastScryfallCall.timestamp}
-**API URL:** \`${this.lastScryfallCall.apiUrl}\`
+**Backend API URL:** \`${this.lastScryfallCall.apiUrl}\`
 **Parsed Filters:** 
 \`\`\`json
 ${JSON.stringify(this.lastScryfallCall.parsedFilters, null, 2)}
@@ -633,7 +634,9 @@ ${JSON.stringify(this.lastScryfallCall.parsedFilters, null, 2)}
 **Search Query:** \`${query}\`
 **Page:** ${page}
 **Timestamp:** ${timestamp}
-**URL:** ${window.location.href}
+
+### 🔗 Reproduction URL
+**Click to reproduce:** ${reproductionUrl}
 ${scryfallInfo}
 
 ### Issue Description
@@ -658,6 +661,7 @@ ${scryfallInfo}
 
     generateCardIssueBody(cardName, cardId) {
         const timestamp = new Date().toISOString();
+        const reproductionUrl = window.location.href;
         
         let scryfallInfo = '';
         if (this.lastScryfallCall) {
@@ -665,7 +669,7 @@ ${scryfallInfo}
 
 ### Scryfall API Call Debug Info
 **Timestamp:** ${this.lastScryfallCall.timestamp}
-**API URL:** \`${this.lastScryfallCall.apiUrl}\`
+**Backend API URL:** \`${this.lastScryfallCall.apiUrl}\`
 **Parsed Filters:** 
 \`\`\`json
 ${JSON.stringify(this.lastScryfallCall.parsedFilters, null, 2)}
@@ -681,7 +685,9 @@ ${JSON.stringify(this.lastScryfallCall.parsedFilters, null, 2)}
 **Search Query:** \`${this.currentQuery}\`
 **Page:** ${this.currentPage}
 **Timestamp:** ${timestamp}
-**URL:** ${window.location.href}
+
+### 🔗 Reproduction URL
+**Click to reproduce:** ${reproductionUrl}
 ${scryfallInfo}
 
 ### Issue Description
@@ -938,20 +944,20 @@ ${scryfallInfo}
     // Enhanced bug reporting with card details
     reportCardBug(cardName, cardData) {
         const query = this.currentQuery || 'Unknown query';
-        const currentUrl = window.location.href;
+        const reproductionUrl = window.location.href;
         
         let scryfallInfo = '';
         if (this.lastScryfallCall) {
             scryfallInfo = `
 
-**Scryfall API Call Debug Info:**
-- **Timestamp:** ${this.lastScryfallCall.timestamp}
-- **API URL:** \`${this.lastScryfallCall.apiUrl}\`
-- **Parsed Filters:** 
+### Scryfall API Call Debug Info
+**Timestamp:** ${this.lastScryfallCall.timestamp}
+**Backend API URL:** \`${this.lastScryfallCall.apiUrl}\`
+**Parsed Filters:** 
 \`\`\`json
 ${JSON.stringify(this.lastScryfallCall.parsedFilters, null, 2)}
 \`\`\`
-- **Scryfall Query:** \`${this.lastScryfallCall.scryfallQuery || 'N/A'}\`
+**Scryfall Query:** \`${this.lastScryfallCall.scryfallQuery || 'N/A'}\`
 `;
         }
         
@@ -971,7 +977,9 @@ ${cardData.oracle_text || 'N/A'}
 
         const title = `Card Issue: ${cardName} in search "${query}"`;
         const body = `**Search Query:** "${query}"
-**Current URL:** ${currentUrl}
+
+### 🔗 Reproduction URL
+**Click to reproduce:** ${reproductionUrl}
 ${scryfallInfo}
 
 ${cardDetails}
