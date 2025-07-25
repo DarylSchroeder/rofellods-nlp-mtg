@@ -80,22 +80,66 @@ class MTGSearch {
         const { page, total_results, total_pages } = pagination;
         
         this.resultsCount.innerHTML = `
-            About ${total_results} results for "${query}" (Page ${page} of ${total_pages})
-            <button class="report-search-btn" onclick="mtgSearch.reportSearchIssue('${query}', ${page})">
-                🐛 Report Search Issue
-            </button>
+            <div class="results-info">
+                <span>About ${total_results} results for "${query}" (Page ${page} of ${total_pages})</span>
+                <button class="report-search-btn" onclick="mtgSearch.reportSearchIssue('${query}', ${page})">
+                    🐛 Report Search Issue
+                </button>
+            </div>
+            <div class="sort-controls">
+                <label>Sort by:</label>
+                <select id="sortSelect" onchange="mtgSearch.sortResults()">
+                    <option value="relevance">Relevance</option>
+                    <option value="name">Name (A-Z)</option>
+                    <option value="cmc">Mana Cost (Low-High)</option>
+                    <option value="price">Price (Low-High)</option>
+                </select>
+            </div>
         `;
-        this.cardResults.innerHTML = '';
-
-        cards.forEach(card => {
-            const cardElement = this.createCardElement(card);
-            this.cardResults.appendChild(cardElement);
-        });
+        
+        // Store original cards for sorting
+        this.currentCards = [...cards];
+        this.renderCards(this.currentCards);
 
         // Add pagination controls
         this.addPaginationControls(pagination);
 
         this.showResults();
+    }
+
+    renderCards(cards) {
+        this.cardResults.innerHTML = '';
+        cards.forEach(card => {
+            const cardElement = this.createCardElement(card);
+            this.cardResults.appendChild(cardElement);
+        });
+    }
+
+    sortResults() {
+        const sortSelect = document.getElementById('sortSelect');
+        const sortBy = sortSelect.value;
+        
+        let sortedCards = [...this.currentCards];
+        
+        switch(sortBy) {
+            case 'name':
+                sortedCards.sort((a, b) => a.name.localeCompare(b.name));
+                break;
+            case 'cmc':
+                sortedCards.sort((a, b) => (a.cmc || 0) - (b.cmc || 0));
+                break;
+            case 'price':
+                sortedCards.sort((a, b) => {
+                    const priceA = parseFloat(a.prices?.usd || '999999');
+                    const priceB = parseFloat(b.prices?.usd || '999999');
+                    return priceA - priceB;
+                });
+                break;
+            default: // relevance - keep original order
+                break;
+        }
+        
+        this.renderCards(sortedCards);
     }
 
     addPaginationControls(pagination) {
@@ -171,8 +215,8 @@ class MTGSearch {
     }
 
     createCardElement(card) {
-        const cardRow = document.createElement('div');
-        cardRow.className = 'card-row';
+        const cardTile = document.createElement('div');
+        cardTile.className = 'card-tile';
 
         // Get card image
         const imageUrl = card.image_uris?.normal || card.image_uris?.large || card.image_uris?.small;
@@ -190,37 +234,77 @@ class MTGSearch {
         const powerToughness = card.power && card.toughness ? `${card.power}/${card.toughness}` : '';
         
         // Truncate oracle text
-        const oracleText = card.oracle_text ? this.truncateText(card.oracle_text, 150) : '';
+        const oracleText = card.oracle_text ? this.truncateText(card.oracle_text, 120) : '';
 
-        cardRow.innerHTML = `
-            <div class="card-image">
-                ${imageUrl ? `<img src="${imageUrl}" alt="${card.name}" loading="lazy">` : '<div class="no-image">No Image</div>'}
+        cardTile.innerHTML = `
+            <div class="card-image-container">
+                ${imageUrl ? `
+                    <img src="${imageUrl}" 
+                         alt="${card.name}" 
+                         class="card-image"
+                         onmouseover="mtgSearch.showLargeImage(event, '${imageUrl}')"
+                         onmouseout="mtgSearch.hideLargeImage()"
+                         loading="lazy">
+                ` : '<div class="no-image">No Image</div>'}
             </div>
-            <div class="card-content">
+            <div class="card-info">
                 <div class="card-header">
                     <a href="${card.scryfall_uri}" target="_blank" class="card-name">${card.name}</a>
-                    <div class="card-type">${card.type_line}</div>
-                </div>
-                ${oracleText ? `<div class="card-text">${oracleText}</div>` : ''}
-                <div class="card-details">
                     ${manaCost ? `<div class="mana-cost">${manaCost}</div>` : ''}
+                </div>
+                <div class="card-type">${card.type_line}</div>
+                ${oracleText ? `<div class="card-text">${oracleText}</div>` : ''}
+                <div class="card-footer">
                     <div class="card-stats">
-                        ${card.cmc !== undefined ? `<span>CMC: ${card.cmc}</span>` : ''}
-                        ${powerToughness ? `<span>P/T: ${powerToughness}</span>` : ''}
-                        ${card.rarity ? `<span>${this.capitalizeFirst(card.rarity)}</span>` : ''}
+                        ${powerToughness ? `<span class="power-toughness">${powerToughness}</span>` : ''}
+                        ${card.rarity ? `<span class="rarity ${card.rarity}">${this.capitalizeFirst(card.rarity)}</span>` : ''}
                         <span class="price">${price}</span>
                     </div>
                     <div class="card-actions">
-                        ${tcgLink !== '#' ? `<a href="${tcgLink}" target="_blank" class="tcg-link">Buy on TCGPlayer</a>` : ''}
+                        ${tcgLink !== '#' ? `<a href="${tcgLink}" target="_blank" class="tcg-link">Buy</a>` : ''}
                         <button class="report-card-btn" onclick="mtgSearch.reportCardIssue('${card.name.replace(/'/g, "\\'")}', '${card.id}')">
-                            🐛 Report Issue
+                            🐛
                         </button>
                     </div>
                 </div>
             </div>
         `;
 
-        return cardRow;
+        return cardTile;
+    }
+
+    showLargeImage(event, imageUrl) {
+        // Remove existing large image
+        this.hideLargeImage();
+        
+        const largeImage = document.createElement('div');
+        largeImage.className = 'large-image-overlay';
+        largeImage.innerHTML = `<img src="${imageUrl}" alt="Large card image">`;
+        
+        document.body.appendChild(largeImage);
+        
+        // Position near mouse
+        const rect = event.target.getBoundingClientRect();
+        largeImage.style.left = (rect.right + 10) + 'px';
+        largeImage.style.top = rect.top + 'px';
+        
+        // Adjust if off-screen
+        setTimeout(() => {
+            const imgRect = largeImage.getBoundingClientRect();
+            if (imgRect.right > window.innerWidth) {
+                largeImage.style.left = (rect.left - imgRect.width - 10) + 'px';
+            }
+            if (imgRect.bottom > window.innerHeight) {
+                largeImage.style.top = (window.innerHeight - imgRect.height - 10) + 'px';
+            }
+        }, 10);
+    }
+
+    hideLargeImage() {
+        const existing = document.querySelector('.large-image-overlay');
+        if (existing) {
+            existing.remove();
+        }
     }
 
     parseManaSymbols(manaCost) {
