@@ -6,7 +6,79 @@ class MTGSearch {
         this.perPage = 20;
         this.viewMode = 'tiles'; // 'tiles' or 'text'
         this.initializeElements();
+        this.loadStateFromURL();
         this.bindEvents();
+        
+        // If we have a query from URL, perform search automatically
+        if (this.currentQuery) {
+            this.performSearch();
+        }
+    }
+
+    // Load search state from URL parameters
+    loadStateFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Load search query
+        const query = urlParams.get('q');
+        if (query) {
+            this.currentQuery = decodeURIComponent(query);
+            this.searchInput.value = this.currentQuery;
+        }
+        
+        // Load view mode
+        const view = urlParams.get('view');
+        if (view && (view === 'tiles' || view === 'text')) {
+            this.viewMode = view;
+            this.updateViewButtons();
+        }
+        
+        // Load page number
+        const page = urlParams.get('page');
+        if (page && !isNaN(page) && page > 0) {
+            this.currentPage = parseInt(page);
+        }
+        
+        // Load per page
+        const perPage = urlParams.get('per_page');
+        if (perPage && !isNaN(perPage) && perPage > 0) {
+            this.perPage = parseInt(perPage);
+        }
+    }
+
+    // Update URL with current search state
+    updateURL() {
+        const params = new URLSearchParams();
+        
+        if (this.currentQuery) {
+            params.set('q', encodeURIComponent(this.currentQuery));
+        }
+        
+        if (this.viewMode !== 'tiles') {
+            params.set('view', this.viewMode);
+        }
+        
+        if (this.currentPage > 1) {
+            params.set('page', this.currentPage.toString());
+        }
+        
+        if (this.perPage !== 20) {
+            params.set('per_page', this.perPage.toString());
+        }
+        
+        const newURL = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+        window.history.replaceState({}, '', newURL);
+    }
+
+    // Update view mode buttons to reflect current state
+    updateViewButtons() {
+        const tilesBtn = document.querySelector('[data-view="tiles"]');
+        const textBtn = document.querySelector('[data-view="text"]');
+        
+        if (tilesBtn && textBtn) {
+            tilesBtn.classList.toggle('active', this.viewMode === 'tiles');
+            textBtn.classList.toggle('active', this.viewMode === 'text');
+        }
     }
 
     initializeElements() {
@@ -28,8 +100,10 @@ class MTGSearch {
             }
         });
 
-        // Focus on search input when page loads
-        this.searchInput.focus();
+        // Focus on search input when page loads (unless we have a query from URL)
+        if (!this.currentQuery) {
+            this.searchInput.focus();
+        }
 
         // Close modals when clicking outside
         window.addEventListener('click', (e) => {
@@ -61,6 +135,9 @@ class MTGSearch {
 
         this.currentQuery = query;
         this.currentPage = page;
+        
+        // Update URL with current search state
+        this.updateURL();
 
         this.showLoading();
         this.hideAllSections();
@@ -160,6 +237,9 @@ class MTGSearch {
 
     setViewMode(mode) {
         this.viewMode = mode;
+        
+        // Update URL with new view mode
+        this.updateURL();
         
         // Update button states
         document.getElementById('tilesViewBtn').classList.toggle('active', mode === 'tiles');
