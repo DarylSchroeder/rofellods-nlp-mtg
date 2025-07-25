@@ -5,6 +5,17 @@ class MTGSearch {
         this.currentPage = 1;
         this.perPage = 20;
         this.viewMode = 'tiles'; // 'tiles' or 'text'
+        this.lastScryfallCall = null; // Cache latest Scryfall API call for bug reports
+        
+        // Load cached Scryfall call from localStorage
+        try {
+            const cached = localStorage.getItem('lastScryfallCall');
+            if (cached) {
+                this.lastScryfallCall = JSON.parse(cached);
+            }
+        } catch (e) {
+            console.warn('Could not load cached Scryfall call:', e);
+        }
         this.initializeElements();
         this.loadStateFromURL();
         this.bindEvents();
@@ -151,6 +162,23 @@ class MTGSearch {
 
             const response = await fetch(`${this.apiUrl}?${params}`);
             const data = await response.json();
+            
+            // Cache the API call info for bug reports
+            this.lastScryfallCall = {
+                timestamp: new Date().toISOString(),
+                searchQuery: query,
+                apiUrl: `${this.apiUrl}?${params}`,
+                responseData: data,
+                scryfallQuery: data.scryfall_query || null,
+                parsedFilters: data.parsed_filters || null
+            };
+            
+            // Store in localStorage for persistence across page refreshes
+            try {
+                localStorage.setItem('lastScryfallCall', JSON.stringify(this.lastScryfallCall));
+            } catch (e) {
+                console.warn('Could not save Scryfall call to localStorage:', e);
+            }
 
             this.hideLoading();
 
@@ -584,12 +612,29 @@ class MTGSearch {
 
     generateSearchIssueBody(query, page) {
         const timestamp = new Date().toISOString();
+        
+        let scryfallInfo = '';
+        if (this.lastScryfallCall) {
+            scryfallInfo = `
+
+### Scryfall API Call Debug Info
+**Timestamp:** ${this.lastScryfallCall.timestamp}
+**API URL:** \`${this.lastScryfallCall.apiUrl}\`
+**Parsed Filters:** 
+\`\`\`json
+${JSON.stringify(this.lastScryfallCall.parsedFilters, null, 2)}
+\`\`\`
+**Scryfall Query:** \`${this.lastScryfallCall.scryfallQuery || 'N/A'}\`
+`;
+        }
+        
         return `## Search Issue Report
 
 **Search Query:** \`${query}\`
 **Page:** ${page}
 **Timestamp:** ${timestamp}
 **URL:** ${window.location.href}
+${scryfallInfo}
 
 ### Issue Description
 <!-- Please describe what went wrong with this search -->
@@ -613,6 +658,22 @@ class MTGSearch {
 
     generateCardIssueBody(cardName, cardId) {
         const timestamp = new Date().toISOString();
+        
+        let scryfallInfo = '';
+        if (this.lastScryfallCall) {
+            scryfallInfo = `
+
+### Scryfall API Call Debug Info
+**Timestamp:** ${this.lastScryfallCall.timestamp}
+**API URL:** \`${this.lastScryfallCall.apiUrl}\`
+**Parsed Filters:** 
+\`\`\`json
+${JSON.stringify(this.lastScryfallCall.parsedFilters, null, 2)}
+\`\`\`
+**Scryfall Query:** \`${this.lastScryfallCall.scryfallQuery || 'N/A'}\`
+`;
+        }
+        
         return `## Card Issue Report
 
 **Card Name:** ${cardName}
@@ -621,6 +682,7 @@ class MTGSearch {
 **Page:** ${this.currentPage}
 **Timestamp:** ${timestamp}
 **URL:** ${window.location.href}
+${scryfallInfo}
 
 ### Issue Description
 <!-- Please describe what's wrong with this card result -->
@@ -876,6 +938,23 @@ class MTGSearch {
     // Enhanced bug reporting with card details
     reportCardBug(cardName, cardData) {
         const query = this.currentQuery || 'Unknown query';
+        const currentUrl = window.location.href;
+        
+        let scryfallInfo = '';
+        if (this.lastScryfallCall) {
+            scryfallInfo = `
+
+**Scryfall API Call Debug Info:**
+- **Timestamp:** ${this.lastScryfallCall.timestamp}
+- **API URL:** \`${this.lastScryfallCall.apiUrl}\`
+- **Parsed Filters:** 
+\`\`\`json
+${JSON.stringify(this.lastScryfallCall.parsedFilters, null, 2)}
+\`\`\`
+- **Scryfall Query:** \`${this.lastScryfallCall.scryfallQuery || 'N/A'}\`
+`;
+        }
+        
         const cardDetails = cardData ? `
 **Card Details:**
 - **Name:** ${cardData.name}
@@ -892,6 +971,8 @@ ${cardData.oracle_text || 'N/A'}
 
         const title = `Card Issue: ${cardName} in search "${query}"`;
         const body = `**Search Query:** "${query}"
+**Current URL:** ${currentUrl}
+${scryfallInfo}
 
 ${cardDetails}
 
