@@ -631,6 +631,7 @@ class MTGSearch {
                 'X cost spell'
             ],
             'Guild Colors': [
+                'azorius:only removal',
                 'azorius counterspell',
                 'simic ramp',
                 'rakdos removal',
