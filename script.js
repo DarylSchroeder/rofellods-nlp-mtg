@@ -1,6 +1,9 @@
 class MTGSearch {
     constructor() {
         this.apiUrl = 'https://mtg-nlp-search.onrender.com/search';
+        this.currentQuery = '';
+        this.currentPage = 1;
+        this.perPage = 20;
         this.initializeElements();
         this.bindEvents();
     }
@@ -28,15 +31,29 @@ class MTGSearch {
         this.searchInput.focus();
     }
 
-    async performSearch() {
+    async performSearch(page = 1) {
         const query = this.searchInput.value.trim();
         if (!query) return;
+
+        // If new search, reset to page 1
+        if (query !== this.currentQuery) {
+            page = 1;
+        }
+
+        this.currentQuery = query;
+        this.currentPage = page;
 
         this.showLoading();
         this.hideAllSections();
 
         try {
-            const response = await fetch(`${this.apiUrl}?${new URLSearchParams({ prompt: query })}`);
+            const params = new URLSearchParams({
+                prompt: query,
+                page: page.toString(),
+                per_page: this.perPage.toString()
+            });
+
+            const response = await fetch(`${this.apiUrl}?${params}`);
             const data = await response.json();
 
             this.hideLoading();
@@ -51,7 +68,7 @@ class MTGSearch {
                 return;
             }
 
-            this.displayResults(data.results, query);
+            this.displayResults(data.results, data.pagination, query);
         } catch (error) {
             console.error('Search error:', error);
             this.hideLoading();
@@ -59,8 +76,10 @@ class MTGSearch {
         }
     }
 
-    displayResults(cards, query) {
-        this.resultsCount.textContent = `About ${cards.length} results for "${query}"`;
+    displayResults(cards, pagination, query) {
+        const { page, total_results, total_pages } = pagination;
+        
+        this.resultsCount.textContent = `About ${total_results} results for "${query}" (Page ${page} of ${total_pages})`;
         this.cardResults.innerHTML = '';
 
         cards.forEach(card => {
@@ -68,7 +87,82 @@ class MTGSearch {
             this.cardResults.appendChild(cardElement);
         });
 
+        // Add pagination controls
+        this.addPaginationControls(pagination);
+
         this.showResults();
+    }
+
+    addPaginationControls(pagination) {
+        const { page, total_pages, has_prev, has_next } = pagination;
+        
+        // Remove existing pagination
+        const existingPagination = document.querySelector('.pagination');
+        if (existingPagination) {
+            existingPagination.remove();
+        }
+
+        // Create pagination container
+        const paginationDiv = document.createElement('div');
+        paginationDiv.className = 'pagination';
+
+        // Previous button
+        if (has_prev) {
+            const prevBtn = this.createPageButton('← Previous', page - 1);
+            paginationDiv.appendChild(prevBtn);
+        }
+
+        // Page numbers (show current and nearby pages)
+        const startPage = Math.max(1, page - 2);
+        const endPage = Math.min(total_pages, page + 2);
+
+        if (startPage > 1) {
+            paginationDiv.appendChild(this.createPageButton('1', 1));
+            if (startPage > 2) {
+                const ellipsis = document.createElement('span');
+                ellipsis.textContent = '...';
+                ellipsis.className = 'pagination-ellipsis';
+                paginationDiv.appendChild(ellipsis);
+            }
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            const pageBtn = this.createPageButton(i.toString(), i);
+            if (i === page) {
+                pageBtn.classList.add('current');
+            }
+            paginationDiv.appendChild(pageBtn);
+        }
+
+        if (endPage < total_pages) {
+            if (endPage < total_pages - 1) {
+                const ellipsis = document.createElement('span');
+                ellipsis.textContent = '...';
+                ellipsis.className = 'pagination-ellipsis';
+                paginationDiv.appendChild(ellipsis);
+            }
+            paginationDiv.appendChild(this.createPageButton(total_pages.toString(), total_pages));
+        }
+
+        // Next button
+        if (has_next) {
+            const nextBtn = this.createPageButton('Next →', page + 1);
+            paginationDiv.appendChild(nextBtn);
+        }
+
+        // Add pagination to results
+        this.results.appendChild(paginationDiv);
+    }
+
+    createPageButton(text, pageNum) {
+        const button = document.createElement('button');
+        button.textContent = text;
+        button.className = 'pagination-btn';
+        button.addEventListener('click', () => {
+            this.performSearch(pageNum);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        return button;
     }
 
     createCardElement(card) {
