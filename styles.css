@@ -1313,6 +1313,7 @@ body {
         flex: 1;
         min-width: 0;
         cursor: pointer;
+        text-align: left;
     }
     
     .text-row-main .card-name:hover {
