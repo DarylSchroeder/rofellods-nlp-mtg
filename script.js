@@ -170,7 +170,7 @@ class MTGSearch {
                 apiUrl: `${this.apiUrl}?${params}`,
                 responseData: data,
                 scryfallQuery: data.scryfall_query || null,
-                parsedFilters: data.parsed_filters || null
+                parsedFilters: data.filters || null  // Fixed: API returns 'filters', not 'parsed_filters'
             };
             
             // Store in localStorage for persistence across page refreshes
