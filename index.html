@@ -125,6 +125,27 @@
         </div>
     </div>
 
+    <!-- Card Detail Modal -->
+    <div id="cardModal" class="card-modal">
+        <div class="card-modal-content">
+            <button class="card-modal-close" onclick="mtgSearch.closeCardModal()">&times;</button>
+            <div class="card-modal-header">
+                <img id="modalCardImage" class="card-modal-image" src="" alt="Card image">
+                <div class="card-modal-info">
+                    <h2 id="modalCardName" class="card-modal-name"></h2>
+                    <p id="modalCardType" class="card-modal-type"></p>
+                    <div id="modalCardMana" class="card-modal-mana"></div>
+                    <div id="modalCardStats" class="card-modal-stats"></div>
+                </div>
+            </div>
+            <div id="modalCardText" class="card-modal-text"></div>
+            <div class="card-modal-actions">
+                <a id="modalTcgLink" class="card-modal-btn card-modal-tcg" href="#" target="_blank">Buy on TCGPlayer</a>
+                <a id="modalScryfallLink" class="card-modal-btn card-modal-scryfall" href="#" target="_blank">View on Scryfall</a>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

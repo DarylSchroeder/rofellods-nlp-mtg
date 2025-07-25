@@ -314,7 +314,7 @@ class MTGSearch {
             </div>
             <div class="card-info">
                 <div class="card-header">
-                    <a href="${card.scryfall_uri}" target="_blank" class="card-name">${card.name}</a>
+                    <span class="card-name">${card.name}</span>
                     ${manaCost ? `<div class="mana-cost">${manaCost}</div>` : ''}
                 </div>
                 <div class="card-type">${card.type_line}</div>
@@ -326,14 +326,22 @@ class MTGSearch {
                         <span class="price">${price}</span>
                     </div>
                     <div class="card-actions">
-                        ${tcgLink !== '#' ? `<a href="${tcgLink}" target="_blank" class="tcg-link">Buy</a>` : ''}
-                        <button class="report-card-btn" onclick="mtgSearch.reportCardBug('${card.name.replace(/'/g, "\\'")}', ${JSON.stringify(card).replace(/'/g, "\\'").replace(/"/g, '&quot;')})">
+                        ${tcgLink !== '#' ? `<a href="${tcgLink}" target="_blank" class="tcg-link" onclick="event.stopPropagation()">Buy</a>` : ''}
+                        <button class="report-card-btn" onclick="event.stopPropagation(); mtgSearch.reportCardBug('${card.name.replace(/'/g, "\\'")}', ${JSON.stringify(card).replace(/'/g, "\\'").replace(/"/g, '&quot;')})">
                             🐛
                         </button>
                     </div>
                 </div>
             </div>
         `;
+
+        // Add click handler to open modal
+        cardTile.addEventListener('click', () => {
+            this.openCardModal(card);
+        });
+
+        // Add cursor pointer style
+        cardTile.style.cursor = 'pointer';
 
         return cardTile;
     }
@@ -353,14 +361,11 @@ class MTGSearch {
         
         // Format power/toughness
         const powerToughness = card.power && card.toughness ? `${card.power}/${card.toughness}` : '';
-        
-        // Truncate oracle text for text view
-        const oracleText = card.oracle_text ? this.truncateText(card.oracle_text, 200) : '';
 
         cardRow.innerHTML = `
             <div class="text-row-header">
                 <div class="text-row-main">
-                    <a href="${card.scryfall_uri}" target="_blank" class="card-name">${card.name}</a>
+                    <span class="card-name">${card.name}</span>
                     ${manaCost ? `<span class="mana-cost">${manaCost}</span>` : ''}
                     <span class="card-type">${card.type_line}</span>
                 </div>
@@ -370,14 +375,18 @@ class MTGSearch {
                     <span class="price">${price}</span>
                 </div>
             </div>
-            ${oracleText ? `<div class="text-row-oracle">${oracleText}</div>` : ''}
             <div class="text-row-actions">
-                ${tcgLink !== '#' ? `<a href="${tcgLink}" target="_blank" class="tcg-link">Buy</a>` : ''}
-                <button class="report-card-btn" onclick="mtgSearch.reportCardIssue('${card.name.replace(/'/g, "\\'")}', '${card.id}')">
+                ${tcgLink !== '#' ? `<a href="${tcgLink}" target="_blank" class="tcg-link" onclick="event.stopPropagation()">Buy</a>` : ''}
+                <button class="report-card-btn" onclick="event.stopPropagation(); mtgSearch.reportCardIssue('${card.name.replace(/'/g, "\\'")}', '${card.id}')">
                     🐛
                 </button>
             </div>
         `;
+
+        // Add click handler to open modal
+        cardRow.addEventListener('click', () => {
+            this.openCardModal(card);
+        });
 
         return cardRow;
     }
@@ -702,6 +711,86 @@ class MTGSearch {
         // Close sample searches menu
         const sampleMenu = document.getElementById('sampleSearchesMenu');
         sampleMenu.style.display = 'none';
+    }
+
+    // Card Modal functionality
+    openCardModal(card) {
+        const modal = document.getElementById('cardModal');
+        const modalImage = document.getElementById('modalCardImage');
+        const modalName = document.getElementById('modalCardName');
+        const modalType = document.getElementById('modalCardType');
+        const modalMana = document.getElementById('modalCardMana');
+        const modalStats = document.getElementById('modalCardStats');
+        const modalText = document.getElementById('modalCardText');
+        const modalTcgLink = document.getElementById('modalTcgLink');
+        const modalScryfallLink = document.getElementById('modalScryfallLink');
+
+        // Populate modal content
+        modalImage.src = card.image_uris?.normal || card.image_uris?.large || '';
+        modalImage.alt = `${card.name} card image`;
+        modalName.textContent = card.name;
+        modalType.textContent = card.type_line;
+        
+        // Mana cost
+        const manaCost = this.parseManaSymbols(card.mana_cost || '');
+        modalMana.innerHTML = manaCost ? `<strong>Mana Cost:</strong> ${manaCost}` : '';
+        
+        // Stats
+        const stats = [];
+        if (card.power && card.toughness) {
+            stats.push(`<span class="card-modal-stat">Power/Toughness: ${card.power}/${card.toughness}</span>`);
+        }
+        if (card.rarity) {
+            stats.push(`<span class="card-modal-stat">Rarity: ${this.capitalizeFirst(card.rarity)}</span>`);
+        }
+        if (card.set_name) {
+            stats.push(`<span class="card-modal-stat">Set: ${card.set_name}</span>`);
+        }
+        if (card.prices?.usd) {
+            stats.push(`<span class="card-modal-stat">Price: $${card.prices.usd}</span>`);
+        }
+        modalStats.innerHTML = stats.join('');
+        
+        // Oracle text
+        modalText.textContent = card.oracle_text || 'No oracle text available.';
+        
+        // Links
+        const tcgLink = card.purchase_uris?.tcgplayer;
+        if (tcgLink && tcgLink !== '#') {
+            modalTcgLink.href = tcgLink;
+            modalTcgLink.style.display = 'inline-block';
+        } else {
+            modalTcgLink.style.display = 'none';
+        }
+        
+        modalScryfallLink.href = card.scryfall_uri || '#';
+        
+        // Show modal
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        
+        // Close on background click
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                this.closeCardModal();
+            }
+        };
+        
+        // Close on escape key
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                this.closeCardModal();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+    }
+
+    closeCardModal() {
+        const modal = document.getElementById('cardModal');
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+        modal.onclick = null;
     }
 
     // Enhanced bug reporting with card details
