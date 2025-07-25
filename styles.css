@@ -1275,7 +1275,7 @@ body {
         max-height: 48px;
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-start;
         gap: 12px;
     }
     
@@ -1283,7 +1283,7 @@ body {
         width: 100%;
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-start;
         gap: 12px;
     }
     
@@ -1328,7 +1328,7 @@ body {
         gap: 8px;
         align-items: center;
         flex-shrink: 0;
-        margin-left: 0;
+        margin-left: auto;
     }
     
     .text-row-actions .tcg-link {
