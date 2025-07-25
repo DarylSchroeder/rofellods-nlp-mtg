@@ -1025,6 +1025,11 @@ body {
     color: #5f6368;
 }
 
+.no-results .report-search-btn {
+    margin-top: 16px;
+    margin-left: 0;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .container {
