@@ -1299,6 +1299,7 @@ body {
         min-width: 0;
         display: flex;
         align-items: center;
+        justify-content: flex-start;
     }
     
     .text-row-main .card-name {
@@ -1313,7 +1314,8 @@ body {
         flex: 1;
         min-width: 0;
         cursor: pointer;
-        text-align: left;
+        text-align: left !important;
+        justify-self: flex-start;
     }
     
     .text-row-main .card-name:hover {
