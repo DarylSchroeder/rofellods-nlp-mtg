@@ -89,83 +89,51 @@ body {
     background-color: #f8f9fa;
 }
 
-/* Sample Searches */
-.sample-searches {
-    margin-top: 16px;
-    text-align: center;
+/* Hamburger Menu Sample Searches */
+.sample-searches-menu {
+    border-top: 1px solid #e0e0e0;
+    margin-top: 8px;
+    padding-top: 8px;
 }
 
-.sample-toggle {
-    background: transparent;
-    border: 1px solid #dfe1e5;
-    border-radius: 20px;
-    padding: 8px 16px;
-    font-size: 14px;
-    color: #5f6368;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0 auto;
-}
-
-.sample-toggle:hover {
-    background: #f8f9fa;
-    border-color: #1a73e8;
-}
-
-.toggle-arrow {
-    transition: transform 0.3s ease;
-}
-
-.toggle-arrow.rotated {
-    transform: rotate(180deg);
-}
-
-.sample-list {
-    margin-top: 16px;
-    padding: 16px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    text-align: left;
+.sample-list-menu {
     max-height: 300px;
     overflow-y: auto;
 }
 
-.sample-category {
-    margin-bottom: 16px;
+.sample-category-menu {
+    margin-bottom: 12px;
 }
 
-.sample-category h4 {
-    color: #1a73e8;
-    margin-bottom: 8px;
-    font-size: 14px;
+.sample-category-menu h4 {
+    color: #333;
+    margin: 0 0 6px 0;
+    font-size: 13px;
     font-weight: 600;
 }
 
-.sample-links {
+.sample-links-menu {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-direction: column;
+    gap: 4px;
 }
 
-.sample-link {
-    background: white;
-    border: 1px solid #dfe1e5;
-    border-radius: 16px;
-    padding: 4px 12px;
+.sample-link-menu {
+    background: transparent;
+    border: none;
+    padding: 4px 8px;
     font-size: 12px;
-    color: #5f6368;
+    color: #666;
     text-decoration: none;
     cursor: pointer;
-    transition: all 0.2s ease;
+    text-align: left;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
 }
 
-.sample-link:hover {
-    background: #1a73e8;
-    color: white;
-    border-color: #1a73e8;
+.sample-link-menu:hover {
+    background: #f0f0f0;
+    color: #333;
 }
 
 /* Modals */
@@ -439,7 +407,7 @@ body {
 .card-results.text-view {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 2px;
 }
 
 /* Card Tiles */
@@ -616,75 +584,151 @@ body {
     background-color: #f9ab00;
 }
 
-/* Card Text Row (Text View) */
+/* Card Text Row (Text View) - Ultra Compact */
 .card-text-row {
     background: white;
-    border-radius: 8px;
-    padding: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-radius: 4px;
+    padding: 6px 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     border: 1px solid #e8eaed;
-    transition: box-shadow 0.3s ease;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 36px;
+    max-height: 48px;
+    overflow: hidden;
 }
 
 .card-text-row:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background: #f8f9fa;
 }
 
 .text-row-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 8px;
-    gap: 16px;
-    flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+    min-height: 24px;
 }
 
 .text-row-main {
     display: flex;
     align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
+    gap: 8px;
     flex: 1;
+    min-width: 0; /* Allow shrinking */
 }
 
 .text-row-main .card-name {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
     color: #1a73e8;
     text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+    flex-shrink: 0;
 }
 
 .text-row-main .card-name:hover {
     text-decoration: underline;
 }
 
+.text-row-main .mana-cost {
+    flex-shrink: 0;
+}
+
+.text-row-main .mana-cost .mana-symbol {
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+}
+
 .text-row-main .card-type {
     color: #5f6368;
-    font-size: 13px;
+    font-size: 11px;
     font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
 }
 
 .text-row-stats {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
-    flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
-.text-row-oracle {
+.text-row-stats .power-toughness {
+    background: #f1f3f4;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
     color: #202124;
-    font-size: 13px;
-    line-height: 1.4;
-    margin-bottom: 12px;
-    padding: 8px 0;
-    border-top: 1px solid #f1f3f4;
+}
+
+.text-row-stats .rarity {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.text-row-stats .price {
+    font-size: 11px;
+    font-weight: 500;
+    color: #137333;
+    min-width: 40px;
+    text-align: right;
+}
+
+/* Remove oracle text in compact view */
+.text-row-oracle {
+    display: none;
 }
 
 .text-row-actions {
     display: flex;
-    gap: 8px;
+    gap: 4px;
     align-items: center;
-    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+.text-row-actions .tcg-link {
+    font-size: 10px;
+    padding: 2px 6px;
+    background: #1a73e8;
+    color: white;
+    text-decoration: none;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.text-row-actions .tcg-link:hover {
+    background: #1557b0;
+}
+
+.text-row-actions .report-card-btn {
+    font-size: 12px;
+    padding: 2px 4px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    opacity: 0.7;
+}
+
+.text-row-actions .report-card-btn:hover {
+    background: #f1f3f4;
+    opacity: 1;
 }
 .large-image-overlay {
     position: fixed;
@@ -921,18 +965,17 @@ body {
         min-width: 140px;
     }
 
-    .sample-list {
-        padding: 12px;
-        max-height: 250px;
+    .sample-list-menu {
+        max-height: 200px;
     }
 
-    .sample-category h4 {
-        font-size: 13px;
+    .sample-category-menu h4 {
+        font-size: 12px;
     }
 
-    .sample-link {
+    .sample-link-menu {
         font-size: 11px;
-        padding: 3px 8px;
+        padding: 3px 6px;
     }
 
     .modal-content {

@@ -20,6 +20,12 @@
                 <nav class="nav-menu" id="navMenu">
                     <a href="#" onclick="mtgSearch.showAbout()">About</a>
                     <a href="#" onclick="mtgSearch.showContact()">Contact</a>
+                    <a href="#" onclick="mtgSearch.toggleSampleSearches()">Sample Searches</a>
+                    <div class="sample-searches-menu" id="sampleSearchesMenu" style="display: none;">
+                        <div class="sample-list-menu" id="sampleListMenu">
+                            <!-- Sample searches will be populated by JavaScript -->
+                        </div>
+                    </div>
                     <a href="https://rofellods.com" target="_blank">Rofellods.com</a>
                 </nav>
             </div>
@@ -42,17 +48,6 @@
                             <path d="m21 21-4.35-4.35"></path>
                         </svg>
                     </button>
-                </div>
-                
-                <!-- Sample Searches -->
-                <div class="sample-searches">
-                    <button class="sample-toggle" onclick="mtgSearch.toggleSamples()">
-                        <span id="sampleToggleText">📝 Show Sample Searches</span>
-                        <span class="toggle-arrow" id="toggleArrow">▼</span>
-                    </button>
-                    <div class="sample-list" id="sampleList" style="display: none;">
-                        <!-- Sample searches will be populated by JavaScript -->
-                    </div>
                 </div>
             </div>
         </div>

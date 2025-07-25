@@ -601,25 +601,19 @@ class MTGSearch {
     }
 
     // Sample searches functionality
-    toggleSamples() {
-        const sampleList = document.getElementById('sampleList');
-        const toggleText = document.getElementById('sampleToggleText');
-        const arrow = document.getElementById('toggleArrow');
+    toggleSampleSearches() {
+        const sampleMenu = document.getElementById('sampleSearchesMenu');
         
-        if (sampleList.style.display === 'none') {
-            sampleList.style.display = 'block';
-            toggleText.textContent = '📝 Hide Sample Searches';
-            arrow.classList.add('rotated');
+        if (sampleMenu.style.display === 'none') {
+            sampleMenu.style.display = 'block';
             this.populateSampleSearches();
         } else {
-            sampleList.style.display = 'none';
-            toggleText.textContent = '📝 Show Sample Searches';
-            arrow.classList.remove('rotated');
+            sampleMenu.style.display = 'none';
         }
     }
 
     populateSampleSearches() {
-        const sampleList = document.getElementById('sampleList');
+        const sampleList = document.getElementById('sampleListMenu');
         
         const sampleCategories = {
             'Basic Searches': [
@@ -683,11 +677,11 @@ class MTGSearch {
         let html = '';
         for (const [category, searches] of Object.entries(sampleCategories)) {
             html += `
-                <div class="sample-category">
+                <div class="sample-category-menu">
                     <h4>${category}</h4>
-                    <div class="sample-links">
+                    <div class="sample-links-menu">
                         ${searches.map(search => 
-                            `<span class="sample-link" onclick="mtgSearch.runSampleSearch('${search.replace(/'/g, "\\'")}')">${search}</span>`
+                            `<span class="sample-link-menu" onclick="mtgSearch.runSampleSearch('${search.replace(/'/g, "\\'")}')">${search}</span>`
                         ).join('')}
                     </div>
                 </div>
@@ -701,14 +695,12 @@ class MTGSearch {
         this.searchInput.value = query;
         this.performSearch();
         
-        // Close samples after selection
-        const sampleList = document.getElementById('sampleList');
-        const toggleText = document.getElementById('sampleToggleText');
-        const arrow = document.getElementById('toggleArrow');
+        // Close the hamburger menu after selection
+        this.closeMenu();
         
-        sampleList.style.display = 'none';
-        toggleText.textContent = '📝 Show Sample Searches';
-        arrow.classList.remove('rotated');
+        // Close sample searches menu
+        const sampleMenu = document.getElementById('sampleSearchesMenu');
+        sampleMenu.style.display = 'none';
     }
 
     // Enhanced bug reporting with card details
