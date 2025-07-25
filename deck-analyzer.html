@@ -370,16 +370,24 @@ SIDEBOARD:
         }
         
         async function callAnalyzeAPI(cardNames) {
-            // For now, we'll use a mock analysis since the backend endpoint needs to be deployed
-            // In production, this would be:
-            // const response = await fetch(`${API_BASE_URL}/analyze-deck`, {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify(cardNames)
-            // });
-            // return await response.json();
-            
-            return await mockAnalyzeAPI(cardNames);
+            try {
+                // Try the real API first
+                const response = await fetch(`${API_BASE_URL}/analyze-deck`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(cardNames)
+                });
+                
+                if (response.ok) {
+                    return await response.json();
+                } else {
+                    console.log('API not available, using mock analysis');
+                    return await mockAnalyzeAPI(cardNames);
+                }
+            } catch (error) {
+                console.log('API error, using mock analysis:', error);
+                return await mockAnalyzeAPI(cardNames);
+            }
         }
         
         async function mockAnalyzeAPI(cardNames) {
