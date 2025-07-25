@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: rofellods-mtg-search
+    env: static
+    buildCommand: echo "No build required for static site"
+    staticPublishPath: .
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
