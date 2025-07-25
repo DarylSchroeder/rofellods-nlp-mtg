@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found | MTG NLP Search</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎴</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px 20px;
+            position: relative;
+        }
+
+        .error-code {
+            font-size: 8rem;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.1);
+            position: absolute;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 0;
+            user-select: none;
+        }
+
+        .card-container {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 30px;
+        }
+
+        .card-image {
+            width: 250px;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .card-image:hover {
+            transform: scale(1.05) rotate(2deg);
+        }
+
+        .loading-card {
+            width: 250px;
+            height: 349px;
+            background: linear-gradient(45deg, #333, #555);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #ccc;
+            margin: 0 auto;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 20px 0 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            opacity: 0.9;
+            font-style: italic;
+        }
+
+        .flavor-text {
+            font-size: 0.95rem;
+            opacity: 0.8;
+            margin-bottom: 30px;
+            font-style: italic;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.4;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #1a73e8;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1557b0;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .shuffle-btn {
+            background: #ff6b35;
+            color: white;
+        }
+
+        .shuffle-btn:hover {
+            background: #e55a2b;
+            transform: translateY(-2px);
+        }
+
+        .card-info {
+            margin-top: 20px;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .sparkles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .sparkle {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 20px;
+            animation: sparkle 3s infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0); }
+            50% { opacity: 1; transform: scale(1); }
+        }
+
+        @media (max-width: 768px) {
+            .error-code {
+                font-size: 6rem;
+                top: -40px;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+            }
+            
+            .card-image, .loading-card {
+                width: 200px;
+                height: 279px;
+            }
+            
+            .actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sparkles" id="sparkles"></div>
+    
+    <div class="container">
+        <div class="error-code">404</div>
+        
+        <div class="card-container">
+            <div class="loading-card" id="loadingCard">
+                🎴 Loading...
+            </div>
+            <img class="card-image" id="cardImage" style="display: none;" alt="Magic card">
+        </div>
+        
+        <h1 class="title" id="errorTitle">Loading magical error...</h1>
+        <p class="subtitle" id="errorSubtitle">Shuffling the multiverse...</p>
+        <p class="flavor-text" id="flavorText"></p>
+        
+        <div class="actions">
+            <a href="/" class="btn btn-primary">🏠 Return Home</a>
+            <button class="btn shuffle-btn" onclick="shuffleCard()">🔀 Shuffle Again</button>
+            <a href="javascript:history.back()" class="btn btn-secondary">↩️ Go Back</a>
+        </div>
+        
+        <div class="card-info" id="cardInfo"></div>
+    </div>
+
+    <script>
+        const errorCards = [
+            {
+                name: "Totally Lost",
+                title: "You look like you're... Totally Lost",
+                subtitle: "This page has been exiled from the battlefield",
+                scryfall_id: "a4e2d2d8-4f94-4d5e-b1c1-4e2d2d8a4e2d"
+            },
+            {
+                name: "Get Lost",
+                title: "Get Lost!",
+                subtitle: "This URL got the same treatment as your creatures",
+                scryfall_id: "b4e2d2d8-4f94-4d5e-b1c1-4e2d2d8a4e2d"
+            },
+            {
+                name: "Fblthp, the Lost",
+                title: "Even Fblthp can't find this page",
+                subtitle: "And he's been lost since Ravnica",
+                scryfall_id: "c4e2d2d8-4f94-4d5e-b1c1-4e2d2d8a4e2d"
+            },
+            {
+                name: "Gone Missing",
+                title: "This page has Gone Missing",
+                subtitle: "Investigate to find clues about what happened",
+                scryfall_id: "d4e2d2d8-4f94-4d5e-b1c1-4e2d2d8a4e2d"
+            },
+            {
+                name: "Fear of Missing Out",
+                title: "FOMO: Fear of Missing Out",
+                subtitle: "Don't worry, you're not missing anything here",
+                scryfall_id: "e4e2d2d8-4f94-4d5e-b1c1-4e2d2d8a4e2d"
+            },
+            {
+                name: "Dismal Failure",
+                title: "Well, this is a Dismal Failure",
+                subtitle: "Counter target URL. It can't be regenerated.",
+                scryfall_id: "f4e2d2d8-4f94-4d5e-b1c1-4e2d2d8a4e2d"
+            },
+            {
+                name: "Failed Inspection",
+                title: "This page Failed Inspection",
+                subtitle: "Return it to its owner's hand",
+                scryfall_id: "a5e2d2d8-4f94-4d5e-b1c1-4e2d2d8a4e2d"
+            },
+            {
+                name: "Far Wanderings",
+                title: "You've wandered too far...",
+                subtitle: "Time to search for a basic land page instead",
+                scryfall_id: "b5e2d2d8-4f94-4d5e-b1c1-4e2d2d8a4e2d"
+            }
+        ];
+
+        let currentCard = null;
+
+        async function fetchCardData(cardName) {
+            try {
+                const response = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(cardName)}`);
+                if (!response.ok) throw new Error('Card not found');
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching card:', error);
+                return null;
+            }
+        }
+
+        async function displayCard(cardConfig) {
+            const loadingCard = document.getElementById('loadingCard');
+            const cardImage = document.getElementById('cardImage');
+            const errorTitle = document.getElementById('errorTitle');
+            const errorSubtitle = document.getElementById('errorSubtitle');
+            const flavorText = document.getElementById('flavorText');
+            const cardInfo = document.getElementById('cardInfo');
+
+            // Show loading state
+            loadingCard.style.display = 'flex';
+            cardImage.style.display = 'none';
+
+            // Update text immediately
+            errorTitle.textContent = cardConfig.title;
+            errorSubtitle.textContent = cardConfig.subtitle;
+
+            // Fetch card data
+            const cardData = await fetchCardData(cardConfig.name);
+            
+            if (cardData) {
+                // Update image
+                cardImage.src = cardData.image_uris?.normal || cardData.image_uris?.large || '';
+                cardImage.alt = cardData.name;
+                
+                // Update flavor text
+                if (cardData.flavor_text) {
+                    flavorText.textContent = `"${cardData.flavor_text}"`;
+                    flavorText.style.display = 'block';
+                } else {
+                    flavorText.style.display = 'none';
+                }
+
+                // Update card info
+                cardInfo.innerHTML = `
+                    <strong>${cardData.name}</strong> ${cardData.mana_cost || ''}<br>
+                    ${cardData.type_line}<br>
+                    <em>${cardData.set_name} (${cardData.set.toUpperCase()})</em>
+                `;
+
+                // Show card image
+                cardImage.onload = () => {
+                    loadingCard.style.display = 'none';
+                    cardImage.style.display = 'block';
+                    createSparkles();
+                };
+            } else {
+                // Fallback if card fetch fails
+                loadingCard.innerHTML = '🎴 Card Unavailable';
+                flavorText.textContent = '"Some things are better left unfound."';
+                cardInfo.textContent = `${cardConfig.name} - Card data unavailable`;
+            }
+
+            currentCard = cardConfig;
+        }
+
+        function shuffleCard() {
+            const randomCard = errorCards[Math.floor(Math.random() * errorCards.length)];
+            displayCard(randomCard);
+        }
+
+        function createSparkles() {
+            const sparklesContainer = document.getElementById('sparkles');
+            sparklesContainer.innerHTML = '';
+            
+            for (let i = 0; i < 20; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                sparkle.textContent = '✨';
+                sparkle.style.left = Math.random() * 100 + '%';
+                sparkle.style.top = Math.random() * 100 + '%';
+                sparkle.style.animationDelay = Math.random() * 3 + 's';
+                sparklesContainer.appendChild(sparkle);
+            }
+        }
+
+        // Initialize with random card
+        document.addEventListener('DOMContentLoaded', () => {
+            shuffleCard();
+        });
+
+        // Add click handler for card image
+        document.getElementById('cardImage').addEventListener('click', () => {
+            if (currentCard) {
+                shuffleCard();
+            }
+        });
+
+        // Add keyboard shortcut for shuffle
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                shuffleCard();
+            }
+        });
+    </script>
+</body>
+</html>

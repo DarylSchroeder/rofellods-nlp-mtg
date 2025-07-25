@@ -1,0 +1,5 @@
+# Redirect all non-existent pages to 404
+/*    /404.html   404
+
+# Main app route
+/     /index.html  200

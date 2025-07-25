@@ -6,5 +6,10 @@ services:
     staticPublishPath: .
     routes:
       - type: rewrite
-        source: /*
+        source: /
         destination: /index.html
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=3600
+    errorDocument: /404.html
