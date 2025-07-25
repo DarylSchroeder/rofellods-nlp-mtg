@@ -1070,6 +1070,61 @@ body {
     margin-left: 0;
 }
 
+/* Cold start error styling */
+.cold-start-message {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+}
+
+.cold-start-message h3 {
+    color: #495057;
+    margin-bottom: 12px;
+    font-size: 1.2rem;
+}
+
+.cold-start-message p {
+    color: #6c757d;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.retry-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.retry-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.retry-btn:hover {
+    background: #0056b3;
+}
+
+.retry-info {
+    font-size: 14px;
+    color: #6c757d;
+}
+
+#countdown {
+    font-weight: bold;
+    color: #007bff;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .container {

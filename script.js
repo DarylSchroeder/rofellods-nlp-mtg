@@ -192,7 +192,38 @@ class MTGSearch {
                 per_page: this.perPage.toString()
             });
 
-            const response = await fetch(`${this.apiUrl}?${params}`);
+            const response = await fetch(`${this.apiUrl}?${params}`, {
+                // Add timeout for better error handling
+                signal: AbortSignal.timeout(30000) // 30 second timeout
+            });
+
+            // Check HTTP status first
+            if (!response.ok) {
+                let errorData;
+                try {
+                    errorData = await response.json();
+                } catch (e) {
+                    // If JSON parsing fails, create generic error
+                    errorData = { detail: { error: `HTTP ${response.status}: ${response.statusText}` } };
+                }
+                
+                if (response.status === 503) {
+                    // Cold start or server loading - show specific message with retry option
+                    this.showColdStartError(errorData.detail);
+                    return;
+                }
+                
+                if (response.status >= 500) {
+                    // Server error
+                    this.showError(`Server error: ${errorData.detail?.error || 'Unknown server error'}`);
+                    return;
+                }
+                
+                // Other HTTP errors (4xx)
+                this.showError(`Request failed: ${errorData.detail?.error || response.statusText}`);
+                return;
+            }
+
             const data = await response.json();
             
             // Log NLP parameters to console for debugging
@@ -222,8 +253,9 @@ class MTGSearch {
 
             this.hideLoading();
 
+            // Legacy error check (should not be needed with proper HTTP status codes)
             if (data.error) {
-                console.warn('❌ API Error:', data.error);
+                console.warn('❌ API Error (legacy):', data.error);
                 this.showError(data.error);
                 return;
             }
@@ -238,7 +270,14 @@ class MTGSearch {
         } catch (error) {
             console.error('💥 Search error:', error);
             this.hideLoading();
-            this.showError('Failed to search. Please try again.');
+            
+            if (error.name === 'TimeoutError') {
+                this.showError('Request timed out. The server may be starting up, please try again.');
+            } else if (error.name === 'AbortError') {
+                this.showError('Request was cancelled. Please try again.');
+            } else {
+                this.showError('Failed to search. Please check your connection and try again.');
+            }
         }
     }
 
@@ -631,6 +670,62 @@ class MTGSearch {
     showError(message) {
         this.error.querySelector('p').textContent = message;
         this.error.classList.remove('hidden');
+    }
+
+    showColdStartError(errorDetail) {
+        const retryAfter = errorDetail.retry_after || 10;
+        const errorType = errorDetail.error_type || 'cold_start';
+        
+        this.error.innerHTML = `
+            <div class="cold-start-message">
+                <h3>🔄 ${errorType === 'loading' ? 'Server Loading Data' : 'Server Starting Up'}</h3>
+                <p>${errorDetail.error}</p>
+                <div class="retry-controls">
+                    <button onclick="mtgSearch.retryLastSearch()" class="retry-btn">
+                        Retry Now
+                    </button>
+                    <span class="retry-info">Auto-retry in <span id="countdown">${retryAfter}</span> seconds</span>
+                </div>
+            </div>
+        `;
+        this.error.classList.remove('hidden');
+        
+        // Start countdown and auto-retry
+        this.startRetryCountdown(retryAfter);
+    }
+
+    startRetryCountdown(seconds) {
+        const countdownElement = document.getElementById('countdown');
+        let remaining = seconds;
+        
+        const countdownInterval = setInterval(() => {
+            remaining--;
+            if (countdownElement) {
+                countdownElement.textContent = remaining;
+            }
+            
+            if (remaining <= 0) {
+                clearInterval(countdownInterval);
+                this.retryLastSearch();
+            }
+        }, 1000);
+        
+        // Store interval ID so we can clear it if user manually retries
+        this.retryCountdownInterval = countdownInterval;
+    }
+
+    retryLastSearch() {
+        // Clear any existing countdown
+        if (this.retryCountdownInterval) {
+            clearInterval(this.retryCountdownInterval);
+            this.retryCountdownInterval = null;
+        }
+        
+        // Retry the last search
+        if (this.currentQuery) {
+            console.log('🔄 Retrying search:', this.currentQuery);
+            this.performSearch(this.currentPage);
+        }
     }
 
     hideAllSections() {
