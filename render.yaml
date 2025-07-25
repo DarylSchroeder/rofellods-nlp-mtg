@@ -2,7 +2,7 @@ services:
   - type: web
     name: rofellods-mtg-search
     env: static
-    buildCommand: echo No build required
+    buildCommand: ./build.sh
     staticPublishPath: .
     routes:
       - type: rewrite
