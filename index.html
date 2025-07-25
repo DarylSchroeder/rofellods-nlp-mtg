@@ -9,8 +9,20 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header with Logo -->
+        <!-- Header with Logo and Navigation -->
         <header class="header">
+            <div class="nav-container">
+                <button class="hamburger-btn" onclick="mtgSearch.toggleMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <nav class="nav-menu" id="navMenu">
+                    <a href="#" onclick="mtgSearch.showAbout()">About</a>
+                    <a href="#" onclick="mtgSearch.showContact()">Contact</a>
+                    <a href="https://rofellods.com" target="_blank">Rofellods.com</a>
+                </nav>
+            </div>
             <img src="https://static.wixstatic.com/media/e4ada0_cd8c288a3fd94904afa503d34b44eed0~mv2.png/v1/fill/w_141,h_141,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Logo%20for%20RofelloDS.png" 
                  alt="RofelloDS Logo" class="logo">
             <h1 class="title">MTG Card Search</h1>
@@ -30,6 +42,17 @@
                             <path d="m21 21-4.35-4.35"></path>
                         </svg>
                     </button>
+                </div>
+                
+                <!-- Sample Searches -->
+                <div class="sample-searches">
+                    <button class="sample-toggle" onclick="mtgSearch.toggleSamples()">
+                        <span id="sampleToggleText">📝 Show Sample Searches</span>
+                        <span class="toggle-arrow" id="toggleArrow">▼</span>
+                    </button>
+                    <div class="sample-list" id="sampleList" style="display: none;">
+                        <!-- Sample searches will be populated by JavaScript -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -56,6 +79,53 @@
         <!-- Error Message -->
         <div id="error" class="error hidden">
             <p>Something went wrong. Please try again.</p>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div id="aboutModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="mtgSearch.closeModal('aboutModal')">&times;</span>
+            <h2>About MTG NLP Search</h2>
+            <p>MTG NLP Search is a natural language search engine for Magic: The Gathering cards, powered by the Scryfall API.</p>
+            
+            <h3>Features:</h3>
+            <ul>
+                <li><strong>Natural Language Parsing:</strong> Search using plain English like "1 mana counterspell" or "fetchland"</li>
+                <li><strong>Mana Cost Detection:</strong> Automatically parses "2 mana", "3 cost", etc. into CMC filters</li>
+                <li><strong>Color Identity:</strong> Supports guild names (azorius, simic) and commander deck contexts</li>
+                <li><strong>Card Types:</strong> Recognizes creatures, instants, sorceries, lands, etc.</li>
+                <li><strong>Effects:</strong> Detects counterspells, ramp, removal, card draw, and more</li>
+                <li><strong>Land Types:</strong> Understands fetchlands, shocklands, triomes, etc.</li>
+            </ul>
+            
+            <h3>About Rofellods:</h3>
+            <p>This project is part of the <a href="https://rofellods.com" target="_blank">Rofellods.com</a> ecosystem - a collection of Magic: The Gathering tools and resources for players and collectors.</p>
+            
+            <p>Visit <a href="https://rofellods.com" target="_blank">Rofellods.com</a> for more MTG tools, deck building resources, and community content.</p>
+        </div>
+    </div>
+
+    <!-- Contact Modal -->
+    <div id="contactModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="mtgSearch.closeModal('contactModal')">&times;</span>
+            <h2>Contact Us</h2>
+            <p>Have questions, suggestions, or found a bug? We'd love to hear from you!</p>
+            
+            <div class="contact-info">
+                <h3>📧 Email:</h3>
+                <p><a href="mailto:rofellods+nlp-mtg@gmail.com">rofellods+nlp-mtg@gmail.com</a></p>
+                
+                <h3>🐛 Bug Reports:</h3>
+                <p>Use the "🐛 Report" buttons throughout the site to automatically generate detailed bug reports with search context.</p>
+                
+                <h3>💡 Feature Requests:</h3>
+                <p>Email us your ideas for new search capabilities, UI improvements, or additional Magic formats to support.</p>
+                
+                <h3>🌐 Website:</h3>
+                <p>Visit <a href="https://rofellods.com" target="_blank">Rofellods.com</a> for more Magic: The Gathering tools and resources.</p>
+            </div>
         </div>
     </div>
 

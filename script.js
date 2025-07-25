@@ -30,6 +30,24 @@ class MTGSearch {
 
         // Focus on search input when page loads
         this.searchInput.focus();
+
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            const hamburger = document.querySelector('.hamburger-btn');
+            const menu = document.getElementById('navMenu');
+            
+            if (hamburger && menu && !hamburger.contains(e.target) && !menu.contains(e.target)) {
+                hamburger.classList.remove('active');
+                menu.classList.remove('show');
+            }
+        });
     }
 
     async performSearch(page = 1) {
@@ -309,7 +327,7 @@ class MTGSearch {
                     </div>
                     <div class="card-actions">
                         ${tcgLink !== '#' ? `<a href="${tcgLink}" target="_blank" class="tcg-link">Buy</a>` : ''}
-                        <button class="report-card-btn" onclick="mtgSearch.reportCardIssue('${card.name.replace(/'/g, "\\'")}', '${card.id}')">
+                        <button class="report-card-btn" onclick="mtgSearch.reportCardBug('${card.name.replace(/'/g, "\\'")}', ${JSON.stringify(card).replace(/'/g, "\\'").replace(/"/g, '&quot;')})">
                             🐛
                         </button>
                     </div>
@@ -549,6 +567,186 @@ class MTGSearch {
         })}`;
         
         window.open(issueUrl, '_blank');
+    }
+
+    // Navigation methods
+    toggleMenu() {
+        const hamburger = document.querySelector('.hamburger-btn');
+        const menu = document.getElementById('navMenu');
+        
+        hamburger.classList.toggle('active');
+        menu.classList.toggle('show');
+    }
+
+    showAbout() {
+        this.closeMenu();
+        document.getElementById('aboutModal').style.display = 'block';
+    }
+
+    showContact() {
+        this.closeMenu();
+        document.getElementById('contactModal').style.display = 'block';
+    }
+
+    closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    closeMenu() {
+        const hamburger = document.querySelector('.hamburger-btn');
+        const menu = document.getElementById('navMenu');
+        
+        hamburger.classList.remove('active');
+        menu.classList.remove('show');
+    }
+
+    // Sample searches functionality
+    toggleSamples() {
+        const sampleList = document.getElementById('sampleList');
+        const toggleText = document.getElementById('sampleToggleText');
+        const arrow = document.getElementById('toggleArrow');
+        
+        if (sampleList.style.display === 'none') {
+            sampleList.style.display = 'block';
+            toggleText.textContent = '📝 Hide Sample Searches';
+            arrow.classList.add('rotated');
+            this.populateSampleSearches();
+        } else {
+            sampleList.style.display = 'none';
+            toggleText.textContent = '📝 Show Sample Searches';
+            arrow.classList.remove('rotated');
+        }
+    }
+
+    populateSampleSearches() {
+        const sampleList = document.getElementById('sampleList');
+        
+        const sampleCategories = {
+            'Basic Searches': [
+                '1 mana counterspell',
+                'fetchland',
+                'azorius removal',
+                '3 mana simic creature',
+                'red burn spell'
+            ],
+            'Mana Costs': [
+                '2 mana instant',
+                '4 cost artifact',
+                '0 mana spell',
+                '6+ mana creature',
+                'X cost spell'
+            ],
+            'Guild Colors': [
+                'azorius counterspell',
+                'simic ramp',
+                'rakdos removal',
+                'selesnya token',
+                'izzet draw'
+            ],
+            'Card Types': [
+                'legendary creature',
+                'artifact creature',
+                'enchantment removal',
+                'planeswalker',
+                'tribal instant'
+            ],
+            'Effects & Mechanics': [
+                'counterspell',
+                'card draw',
+                'ramp spell',
+                'removal spell',
+                'token generator'
+            ],
+            'Land Types': [
+                'shockland',
+                'triome',
+                'basic land',
+                'dual land',
+                'utility land'
+            ],
+            'Commander Searches': [
+                'counterspell for my Chulane deck',
+                'removal for Atraxa',
+                'ramp for Omnath',
+                'draw for Niv-Mizzet',
+                'token for Rhys'
+            ],
+            'Advanced Queries': [
+                'blue instant that counters spells',
+                'green creature with trample',
+                'artifact that costs 2 or less',
+                'red sorcery that deals damage',
+                'white enchantment that gains life'
+            ]
+        };
+
+        let html = '';
+        for (const [category, searches] of Object.entries(sampleCategories)) {
+            html += `
+                <div class="sample-category">
+                    <h4>${category}</h4>
+                    <div class="sample-links">
+                        ${searches.map(search => 
+                            `<span class="sample-link" onclick="mtgSearch.runSampleSearch('${search.replace(/'/g, "\\'")}')">${search}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        sampleList.innerHTML = html;
+    }
+
+    runSampleSearch(query) {
+        this.searchInput.value = query;
+        this.performSearch();
+        
+        // Close samples after selection
+        const sampleList = document.getElementById('sampleList');
+        const toggleText = document.getElementById('sampleToggleText');
+        const arrow = document.getElementById('toggleArrow');
+        
+        sampleList.style.display = 'none';
+        toggleText.textContent = '📝 Show Sample Searches';
+        arrow.classList.remove('rotated');
+    }
+
+    // Enhanced bug reporting with card details
+    reportCardBug(cardName, cardData) {
+        const query = this.currentQuery || 'Unknown query';
+        const cardDetails = cardData ? `
+**Card Details:**
+- **Name:** ${cardData.name}
+- **Mana Cost:** ${cardData.mana_cost || 'N/A'}
+- **Type:** ${cardData.type_line || 'N/A'}
+- **Oracle Text:** 
+\`\`\`
+${cardData.oracle_text || 'N/A'}
+\`\`\`
+- **Set:** ${cardData.set_name || 'N/A'} (${(cardData.set || 'N/A').toUpperCase()})
+- **Scryfall ID:** ${cardData.id || 'N/A'}
+- **Scryfall URI:** ${cardData.scryfall_uri || 'N/A'}
+` : `**Card Name:** ${cardName}`;
+
+        const title = `Card Issue: ${cardName} in search "${query}"`;
+        const body = `**Search Query:** "${query}"
+
+${cardDetails}
+
+**Issue Description:**
+<!-- Please describe what's wrong with this card appearing in the search results -->
+
+**Expected Behavior:**
+<!-- What should happen instead? -->
+
+**Additional Context:**
+<!-- Any other relevant information -->
+
+---
+*Auto-generated bug report from MTG NLP Search*
+*Search performed at: ${new Date().toISOString()}*`;
+
+        this.openGitHubIssue(title, body);
     }
 }
 
