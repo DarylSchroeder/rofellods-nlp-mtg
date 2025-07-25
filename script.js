@@ -79,7 +79,12 @@ class MTGSearch {
     displayResults(cards, pagination, query) {
         const { page, total_results, total_pages } = pagination;
         
-        this.resultsCount.textContent = `About ${total_results} results for "${query}" (Page ${page} of ${total_pages})`;
+        this.resultsCount.innerHTML = `
+            About ${total_results} results for "${query}" (Page ${page} of ${total_pages})
+            <button class="report-search-btn" onclick="mtgSearch.reportSearchIssue('${query}', ${page})">
+                🐛 Report Search Issue
+            </button>
+        `;
         this.cardResults.innerHTML = '';
 
         cards.forEach(card => {
@@ -205,7 +210,12 @@ class MTGSearch {
                         ${card.rarity ? `<span>${this.capitalizeFirst(card.rarity)}</span>` : ''}
                         <span class="price">${price}</span>
                     </div>
-                    ${tcgLink !== '#' ? `<a href="${tcgLink}" target="_blank" class="tcg-link">Buy on TCGPlayer</a>` : ''}
+                    <div class="card-actions">
+                        ${tcgLink !== '#' ? `<a href="${tcgLink}" target="_blank" class="tcg-link">Buy on TCGPlayer</a>` : ''}
+                        <button class="report-card-btn" onclick="mtgSearch.reportCardIssue('${card.name.replace(/'/g, "\\'")}', '${card.id}')">
+                            🐛 Report Issue
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
@@ -276,9 +286,98 @@ class MTGSearch {
         this.noResults.classList.add('hidden');
         this.error.classList.add('hidden');
     }
+
+    // Bug reporting methods
+    reportSearchIssue(query, page) {
+        const title = `Search Issue: "${query}"`;
+        const body = this.generateSearchIssueBody(query, page);
+        this.openGitHubIssue(title, body);
+    }
+
+    reportCardIssue(cardName, cardId) {
+        const title = `Card Issue: ${cardName}`;
+        const body = this.generateCardIssueBody(cardName, cardId);
+        this.openGitHubIssue(title, body);
+    }
+
+    generateSearchIssueBody(query, page) {
+        const timestamp = new Date().toISOString();
+        return `## Search Issue Report
+
+**Search Query:** \`${query}\`
+**Page:** ${page}
+**Timestamp:** ${timestamp}
+**URL:** ${window.location.href}
+
+### Issue Description
+<!-- Please describe what went wrong with this search -->
+
+
+### Expected Results
+<!-- What results did you expect to see? -->
+
+
+### Actual Results
+<!-- What results did you actually get? -->
+
+
+### Additional Context
+<!-- Any other information that might help -->
+
+
+---
+*Auto-generated from RofelloDS MTG Search*`;
+    }
+
+    generateCardIssueBody(cardName, cardId) {
+        const timestamp = new Date().toISOString();
+        return `## Card Issue Report
+
+**Card Name:** ${cardName}
+**Card ID:** \`${cardId}\`
+**Search Query:** \`${this.currentQuery}\`
+**Page:** ${this.currentPage}
+**Timestamp:** ${timestamp}
+**URL:** ${window.location.href}
+
+### Issue Description
+<!-- Please describe what's wrong with this card result -->
+
+
+### Expected Behavior
+<!-- What should have happened? -->
+
+
+### Actual Behavior
+<!-- What actually happened? -->
+
+
+### Steps to Reproduce
+1. Search for: \`${this.currentQuery}\`
+2. Go to page ${this.currentPage}
+3. Look at card: ${cardName}
+
+### Additional Context
+<!-- Any other information that might help -->
+
+
+---
+*Auto-generated from RofelloDS MTG Search*`;
+    }
+
+    openGitHubIssue(title, body) {
+        const repoUrl = 'https://github.com/DarylSchroeder/rofellods-nlp-mtg';
+        const issueUrl = `${repoUrl}/issues/new?${new URLSearchParams({
+            title: title,
+            body: body,
+            labels: 'bug,user-reported'
+        })}`;
+        
+        window.open(issueUrl, '_blank');
+    }
 }
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new MTGSearch();
+    window.mtgSearch = new MTGSearch();
 });

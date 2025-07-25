@@ -210,6 +210,14 @@ body {
     flex-wrap: wrap;
     gap: 16px;
     align-items: center;
+    justify-content: space-between;
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 .mana-cost {
@@ -245,6 +253,7 @@ body {
     align-items: center;
     font-size: 14px;
     color: #5f6368;
+    flex: 1;
 }
 
 .price {
@@ -265,6 +274,39 @@ body {
 
 .tcg-link:hover {
     background-color: #1557b0;
+}
+
+/* Bug Report Buttons */
+.report-search-btn {
+    background-color: #ea4335;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-left: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.report-search-btn:hover {
+    background-color: #d33b2c;
+}
+
+.report-card-btn {
+    background-color: #fbbc04;
+    color: #202124;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-weight: 500;
+}
+
+.report-card-btn:hover {
+    background-color: #f9ab00;
 }
 
 /* Pagination */
