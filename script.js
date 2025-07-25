@@ -165,8 +165,8 @@ class MTGSearch {
         document.getElementById('tilesViewBtn').classList.toggle('active', mode === 'tiles');
         document.getElementById('textViewBtn').classList.toggle('active', mode === 'text');
         
-        // Re-render current cards
-        this.renderCards(this.currentCards);
+        // Re-render current cards with current sort order
+        this.sortResults();
     }
 
     changePerPage() {
