@@ -4,6 +4,7 @@ class MTGSearch {
         this.currentQuery = '';
         this.currentPage = 1;
         this.perPage = 20;
+        this.viewMode = 'tiles'; // 'tiles' or 'text'
         this.initializeElements();
         this.bindEvents();
     }
@@ -86,14 +87,34 @@ class MTGSearch {
                     🐛 Report Search Issue
                 </button>
             </div>
-            <div class="sort-controls">
-                <label>Sort by:</label>
-                <select id="sortSelect" onchange="mtgSearch.sortResults()">
-                    <option value="relevance">Relevance</option>
-                    <option value="name">Name (A-Z)</option>
-                    <option value="cmc">Mana Cost (Low-High)</option>
-                    <option value="price">Price (Low-High)</option>
-                </select>
+            <div class="results-controls">
+                <div class="sort-controls">
+                    <label>Sort by:</label>
+                    <select id="sortSelect" onchange="mtgSearch.sortResults()">
+                        <option value="relevance">Relevance</option>
+                        <option value="name-asc">Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
+                        <option value="cmc">Mana Cost (Low-High)</option>
+                        <option value="price">Price (Low-High)</option>
+                    </select>
+                </div>
+                <div class="view-controls">
+                    <label>View:</label>
+                    <button id="tilesViewBtn" class="view-btn ${this.viewMode === 'tiles' ? 'active' : ''}" onclick="mtgSearch.setViewMode('tiles')">
+                        🎴 Tiles
+                    </button>
+                    <button id="textViewBtn" class="view-btn ${this.viewMode === 'text' ? 'active' : ''}" onclick="mtgSearch.setViewMode('text')">
+                        📝 Text
+                    </button>
+                </div>
+                <div class="pagination-controls">
+                    <label>Per page:</label>
+                    <select id="perPageSelect" onchange="mtgSearch.changePerPage()">
+                        <option value="20" ${this.perPage === 20 ? 'selected' : ''}>20</option>
+                        <option value="50" ${this.perPage === 50 ? 'selected' : ''}>50</option>
+                        <option value="100" ${this.perPage === 100 ? 'selected' : ''}>100</option>
+                    </select>
+                </div>
             </div>
         `;
         
@@ -109,10 +130,33 @@ class MTGSearch {
 
     renderCards(cards) {
         this.cardResults.innerHTML = '';
+        this.cardResults.className = `card-results ${this.viewMode}-view`;
+        
         cards.forEach(card => {
-            const cardElement = this.createCardElement(card);
+            const cardElement = this.viewMode === 'tiles' 
+                ? this.createCardTile(card) 
+                : this.createCardTextRow(card);
             this.cardResults.appendChild(cardElement);
         });
+    }
+
+    setViewMode(mode) {
+        this.viewMode = mode;
+        
+        // Update button states
+        document.getElementById('tilesViewBtn').classList.toggle('active', mode === 'tiles');
+        document.getElementById('textViewBtn').classList.toggle('active', mode === 'text');
+        
+        // Re-render current cards
+        this.renderCards(this.currentCards);
+    }
+
+    changePerPage() {
+        const perPageSelect = document.getElementById('perPageSelect');
+        this.perPage = parseInt(perPageSelect.value);
+        
+        // Reset to page 1 and perform new search
+        this.performSearch(1);
     }
 
     sortResults() {
@@ -122,8 +166,11 @@ class MTGSearch {
         let sortedCards = [...this.currentCards];
         
         switch(sortBy) {
-            case 'name':
+            case 'name-asc':
                 sortedCards.sort((a, b) => a.name.localeCompare(b.name));
+                break;
+            case 'name-desc':
+                sortedCards.sort((a, b) => b.name.localeCompare(a.name));
                 break;
             case 'cmc':
                 sortedCards.sort((a, b) => (a.cmc || 0) - (b.cmc || 0));
@@ -214,7 +261,7 @@ class MTGSearch {
         return button;
     }
 
-    createCardElement(card) {
+    createCardTile(card) {
         const cardTile = document.createElement('div');
         cardTile.className = 'card-tile';
 
@@ -271,6 +318,50 @@ class MTGSearch {
         `;
 
         return cardTile;
+    }
+
+    createCardTextRow(card) {
+        const cardRow = document.createElement('div');
+        cardRow.className = 'card-text-row';
+
+        // Parse mana cost
+        const manaCost = this.parseManaSymbols(card.mana_cost || '');
+        
+        // Get TCGPlayer link
+        const tcgLink = card.purchase_uris?.tcgplayer || '#';
+        
+        // Format price
+        const price = card.prices?.usd ? `$${card.prices.usd}` : 'N/A';
+        
+        // Format power/toughness
+        const powerToughness = card.power && card.toughness ? `${card.power}/${card.toughness}` : '';
+        
+        // Truncate oracle text for text view
+        const oracleText = card.oracle_text ? this.truncateText(card.oracle_text, 200) : '';
+
+        cardRow.innerHTML = `
+            <div class="text-row-header">
+                <div class="text-row-main">
+                    <a href="${card.scryfall_uri}" target="_blank" class="card-name">${card.name}</a>
+                    ${manaCost ? `<span class="mana-cost">${manaCost}</span>` : ''}
+                    <span class="card-type">${card.type_line}</span>
+                </div>
+                <div class="text-row-stats">
+                    ${powerToughness ? `<span class="power-toughness">${powerToughness}</span>` : ''}
+                    ${card.rarity ? `<span class="rarity ${card.rarity}">${this.capitalizeFirst(card.rarity)}</span>` : ''}
+                    <span class="price">${price}</span>
+                </div>
+            </div>
+            ${oracleText ? `<div class="text-row-oracle">${oracleText}</div>` : ''}
+            <div class="text-row-actions">
+                ${tcgLink !== '#' ? `<a href="${tcgLink}" target="_blank" class="tcg-link">Buy</a>` : ''}
+                <button class="report-card-btn" onclick="mtgSearch.reportCardIssue('${card.name.replace(/'/g, "\\'")}', '${card.id}')">
+                    🐛
+                </button>
+            </div>
+        `;
+
+        return cardRow;
     }
 
     showLargeImage(event, imageUrl) {
