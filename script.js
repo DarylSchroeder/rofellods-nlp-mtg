@@ -13,6 +13,11 @@ class MTGSearch {
         this.selectedCommander = null; // {name: "Muldrotha, the Gravetide", colors: "UBG"}
         this.commanderCache = null; // Cache commander list from API
         
+        // Card name lookahead state
+        this.cardNameLookaheadTimeout = null;
+        this.currentLookaheadQuery = '';
+        this.isShowingLookahead = false;
+        
         // Load cached Scryfall call from localStorage
         try {
             const cached = localStorage.getItem('lastScryfallCall');
@@ -175,10 +180,15 @@ class MTGSearch {
         });
 
         this.searchInput.addEventListener('input', (e) => {
-            if (e.target.value.trim()) {
+            const query = e.target.value.trim();
+            
+            if (query) {
                 this.hideSearchDropdown();
+                // Start card name lookahead
+                this.startCardNameLookahead(query);
             } else {
                 this.showSearchDropdown();
+                this.hideCardNameLookahead();
             }
         });
 
@@ -187,6 +197,7 @@ class MTGSearch {
             const searchBox = document.querySelector('.search-box');
             if (!searchBox.contains(e.target)) {
                 this.hideSearchDropdown();
+                this.hideCardNameLookahead();
             }
         });
 
@@ -1277,6 +1288,7 @@ ${scryfallInfo}
         if (dropdown) {
             dropdown.classList.add('hidden');
         }
+        this.isShowingLookahead = false;
     }
 
     populateSearchDropdown() {
@@ -1335,6 +1347,90 @@ ${scryfallInfo}
     selectDropdownItem(query) {
         this.searchInput.value = query;
         this.hideSearchDropdown();
+        this.performSearch();
+    }
+
+    // Card Name Lookahead functionality
+    startCardNameLookahead(query) {
+        // Clear existing timeout
+        if (this.cardNameLookaheadTimeout) {
+            clearTimeout(this.cardNameLookaheadTimeout);
+        }
+        
+        // Set a short delay to avoid too many API calls
+        this.cardNameLookaheadTimeout = setTimeout(() => {
+            this.fetchCardNameSuggestions(query);
+        }, 300);
+    }
+    
+    async fetchCardNameSuggestions(query) {
+        // Don't show lookahead for very short queries
+        if (query.length < 3) {
+            this.hideCardNameLookahead();
+            return;
+        }
+        
+        // Check if query looks like it might be a card name (starts with capital letter or quotes)
+        const mightBeCardName = /^[A-Z"]/.test(query) || query.includes(',');
+        if (!mightBeCardName) {
+            this.hideCardNameLookahead();
+            return;
+        }
+        
+        try {
+            const baseApiUrl = this.apiUrl.replace('/search', '');
+            const response = await fetch(`${baseApiUrl}/card-names?query=${encodeURIComponent(query)}&limit=8`);
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.loaded && data.suggestions.length > 0) {
+                    this.showCardNameLookahead(data.suggestions, data.is_exact_match);
+                } else {
+                    this.hideCardNameLookahead();
+                }
+            } else {
+                this.hideCardNameLookahead();
+            }
+        } catch (error) {
+            console.warn('Card name lookahead error:', error);
+            this.hideCardNameLookahead();
+        }
+    }
+    
+    showCardNameLookahead(suggestions, isExactMatch) {
+        const dropdown = document.getElementById('searchDropdown');
+        const dropdownContent = document.getElementById('dropdownContent');
+        
+        if (!dropdown || !dropdownContent) return;
+        
+        // Update dropdown header
+        const header = dropdown.querySelector('.dropdown-header');
+        if (header) {
+            header.textContent = isExactMatch ? 'Exact Card Match' : 'Card Name Suggestions';
+        }
+        
+        // Populate with card name suggestions
+        let html = '';
+        suggestions.forEach(cardName => {
+            const escapedName = cardName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            html += `<div class="dropdown-item card-name-suggestion" onclick="mtgSearch.selectCardName('${escapedName}')">${cardName}</div>`;
+        });
+        
+        dropdownContent.innerHTML = html;
+        dropdown.classList.remove('hidden');
+        this.isShowingLookahead = true;
+    }
+    
+    hideCardNameLookahead() {
+        if (this.isShowingLookahead) {
+            this.hideSearchDropdown();
+            this.isShowingLookahead = false;
+        }
+    }
+    
+    selectCardName(cardName) {
+        this.searchInput.value = cardName;
+        this.hideCardNameLookahead();
         this.performSearch();
     }
 
@@ -1485,10 +1581,12 @@ ${cardDetails}
         // Clear any previous input
         const modalInput = document.getElementById('commanderModalInput');
         const previewDiv = document.getElementById('selectedCommanderPreview');
+        const previewImage = document.getElementById('previewCommanderImage');
         const setBtn = document.getElementById('setCommanderBtn');
         
         modalInput.value = '';
         previewDiv.style.display = 'none';
+        previewImage.style.display = 'none';
         setBtn.disabled = true;
         
         // Show modal
@@ -1563,11 +1661,13 @@ ${cardDetails}
     handleCommanderModalInput(event) {
         const query = event.target.value.toLowerCase().trim();
         const previewDiv = document.getElementById('selectedCommanderPreview');
+        const previewImage = document.getElementById('previewCommanderImage');
         const setBtn = document.getElementById('setCommanderBtn');
         
         if (query.length < 2) {
             this.hideCommanderModalSuggestions();
             previewDiv.style.display = 'none';
+            previewImage.style.display = 'none';
             setBtn.disabled = true;
             return;
         }
@@ -1630,9 +1730,9 @@ ${cardDetails}
         // Set input value
         modalInput.value = name;
         
-        // Show preview
-        document.getElementById('previewCommanderName').textContent = name;
-        document.getElementById('previewCommanderColors').textContent = colors;
+        // Fetch and display commander card image
+        this.loadCommanderImage(name);
+        
         previewDiv.style.display = 'block';
         
         // Enable set button
@@ -1640,6 +1740,44 @@ ${cardDetails}
         
         // Hide suggestions
         this.hideCommanderModalSuggestions();
+    }
+
+    async loadCommanderImage(commanderName) {
+        const imageElement = document.getElementById('previewCommanderImage');
+        
+        // Show loading state
+        imageElement.style.display = 'none';
+        
+        try {
+            // Use Scryfall API to get commander card image
+            const response = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(commanderName)}`);
+            
+            if (response.ok) {
+                const cardData = await response.json();
+                
+                // Use the normal (larger) image for the preview
+                if (cardData.image_uris && cardData.image_uris.normal) {
+                    imageElement.src = cardData.image_uris.normal;
+                    imageElement.alt = `${commanderName} card`;
+                    imageElement.style.display = 'block';
+                } else if (cardData.card_faces && cardData.card_faces[0].image_uris) {
+                    // Handle double-faced cards
+                    imageElement.src = cardData.card_faces[0].image_uris.normal;
+                    imageElement.alt = `${commanderName} card`;
+                    imageElement.style.display = 'block';
+                } else {
+                    // No image available
+                    console.warn(`No image available for commander: ${commanderName}`);
+                    imageElement.style.display = 'none';
+                }
+            } else {
+                console.warn(`Could not fetch image for commander: ${commanderName}`);
+                imageElement.style.display = 'none';
+            }
+        } catch (error) {
+            console.error(`Error loading commander image for ${commanderName}:`, error);
+            imageElement.style.display = 'none';
+        }
     }
 
     updateCommanderStatusDisplay() {
