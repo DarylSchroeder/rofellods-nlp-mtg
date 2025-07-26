@@ -287,9 +287,6 @@ class MTGSearch {
         this.resultsCount.innerHTML = `
             <div class="results-info">
                 <span>About ${total_results} results for "${query}" (Page ${page} of ${total_pages})</span>
-                <button class="report-search-btn" onclick="mtgSearch.reportSearchIssue('${query}', ${page})">
-                    🐛 Report Search Issue
-                </button>
             </div>
             <div class="results-controls">
                 <div class="sort-controls">
