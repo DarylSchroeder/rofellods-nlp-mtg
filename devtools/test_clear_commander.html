@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Clear Commander</title>
+    <style>
+        .commander-status {
+            background: #e8f4fd;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin-bottom: 2px;
+            font-size: 0.5em;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            line-height: 1.2;
+        }
+        
+        .clear-commander-text {
+            font-size: 0.75em;
+            color: #dc3545;
+            cursor: pointer;
+            margin-left: 6px;
+            font-weight: bold;
+            user-select: none;
+        }
+        
+        .clear-commander-text:hover {
+            color: #a71e2a;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Clear Commander</h1>
+    
+    <div id="commanderStatus" class="commander-status" style="display: block;">
+        Commander set: <span id="commanderStatusName">Atraxa, Praetors' Voice</span>
+        <span class="clear-commander-text" title="Clear commander">X</span>
+    </div>
+    
+    <button onclick="testClear()">Test Clear Function</button>
+    <button onclick="testShow()">Test Show Function</button>
+    
+    <script>
+        // Mock MTGSearch object
+        const mockMTGSearch = {
+            selectedCommander: { name: "Atraxa, Praetors' Voice", colors: "WUBG" },
+            currentFormat: 'commander',
+            
+            clearCommander() {
+                console.log('🎯 clearCommander() called');
+                console.log('Before clear:', {
+                    selectedCommander: this.selectedCommander,
+                    currentFormat: this.currentFormat
+                });
+                
+                this.selectedCommander = null;
+                this.currentFormat = 'standard';
+                
+                console.log('After clear:', {
+                    selectedCommander: this.selectedCommander,
+                    currentFormat: this.currentFormat
+                });
+                
+                this.updateCommanderStatusDisplay();
+            },
+            
+            updateCommanderStatusDisplay() {
+                const statusDiv = document.getElementById('commanderStatus');
+                const statusName = document.getElementById('commanderStatusName');
+                
+                console.log('🔍 updateCommanderStatusDisplay called:', {
+                    selectedCommander: this.selectedCommander,
+                    currentFormat: this.currentFormat,
+                    shouldShow: this.selectedCommander && this.currentFormat === 'commander'
+                });
+                
+                if (this.selectedCommander && this.currentFormat === 'commander') {
+                    statusName.textContent = this.selectedCommander.name;
+                    statusDiv.style.display = 'block';
+                    console.log('✅ Showing commander status:', this.selectedCommander.name);
+                } else {
+                    statusDiv.style.display = 'none';
+                    console.log('❌ Hiding commander status');
+                }
+            }
+        };
+        
+        // Event delegation for clear button
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('clear-commander-text')) {
+                console.log('🎯 Clear commander button clicked via delegation');
+                mockMTGSearch.clearCommander();
+            }
+        });
+        
+        function testClear() {
+            mockMTGSearch.clearCommander();
+        }
+        
+        function testShow() {
+            mockMTGSearch.selectedCommander = { name: "Atraxa, Praetors' Voice", colors: "WUBG" };
+            mockMTGSearch.currentFormat = 'commander';
+            mockMTGSearch.updateCommanderStatusDisplay();
+        }
+    </script>
+</body>
+</html>

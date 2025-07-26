@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Detection Test</title>
+</head>
+<body>
+    <h1>API Detection Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        // Copy the API detection logic from script.js
+        function getApiUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const hostname = window.location.hostname;
+            const port = window.location.port;
+            
+            console.log('🔍 Detecting API URL:', { hostname, port });
+            
+            // Allow manual override via URL parameter: ?api=local or ?api=prod
+            const apiOverride = urlParams.get('api');
+            if (apiOverride === 'local') {
+                console.log('🔧 Manual override: using localhost:8000 backend');
+                return 'http://localhost:8000/search';
+            }
+            if (apiOverride === 'prod') {
+                console.log('🔧 Manual override: using Render backend');
+                return 'https://mtg-nlp-search.onrender.com/search';
+            }
+            
+            // Local development detection
+            if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
+                // Check if we're running on port 8080, 8081, or other typical dev ports
+                if (port === '8080' || port === '8081' || port === '3000' || port === '5000') {
+                    console.log('🏠 Local development detected, using localhost:8000 backend');
+                    return 'http://localhost:8000/search';  // Local backend
+                }
+            }
+            
+            // Production or other environments
+            console.log('🌐 Production environment detected, using Render backend');
+            return 'https://mtg-nlp-search.onrender.com/search';
+        }
+        
+        const apiUrl = getApiUrl();
+        const baseApiUrl = apiUrl.replace('/search', '');
+        
+        document.getElementById('results').innerHTML = `
+            <p><strong>Hostname:</strong> ${window.location.hostname}</p>
+            <p><strong>Port:</strong> ${window.location.port}</p>
+            <p><strong>API URL:</strong> ${apiUrl}</p>
+            <p><strong>Base API URL:</strong> ${baseApiUrl}</p>
+            <p><strong>Commanders URL:</strong> ${baseApiUrl}/commanders</p>
+        `;
+        
+        // Test commanders endpoint
+        fetch(`${baseApiUrl}/commanders`)
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            })
+            .then(data => {
+                document.getElementById('results').innerHTML += `
+                    <p><strong>✅ Commanders loaded:</strong> ${data.length} commanders</p>
+                    <p><strong>First few:</strong> ${data.slice(0, 3).map(c => c.name).join(', ')}</p>
+                `;
+            })
+            .catch(error => {
+                document.getElementById('results').innerHTML += `
+                    <p><strong>❌ Commanders error:</strong> ${error.message}</p>
+                `;
+            });
+    </script>
+</body>
+</html>

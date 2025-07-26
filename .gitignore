@@ -1,0 +1,37 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Log files
+*.log
+server.log
+frontend.log
+
+# Backup files
+*_backup.*
+*_fixed.*
+styles_backup.css
+styles_fixed.css
+
+# Temporary directories
+tmp/
+temp/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# Node modules (if we ever add npm)
+node_modules/

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commander Modal Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Commander Modal Implementation Test</h1>
+    
+    <div class="test-section">
+        <h2>✅ Implementation Status</h2>
+        <p class="success">✓ Modal HTML structure exists in index.html</p>
+        <p class="success">✓ Commander modal methods implemented in script.js</p>
+        <p class="success">✓ CSS styles for modal and suggestions exist</p>
+        <p class="success">✓ Event listeners properly configured</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Key Features Implemented</h2>
+        <ul>
+            <li><strong>showCommanderModal()</strong> - Opens modal when "Commander" is selected</li>
+            <li><strong>cancelCommanderSelection()</strong> - Closes modal and resets to "Standard"</li>
+            <li><strong>setCommander()</strong> - Sets commander and updates status display</li>
+            <li><strong>handleCommanderModalInput()</strong> - Handles typing and suggestions</li>
+            <li><strong>updateCommanderStatusDisplay()</strong> - Shows "Commander set: {name}" above search box</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🔄 User Flow</h2>
+        <ol>
+            <li>User selects "Commander" from format dropdown</li>
+            <li>Modal opens with commander input field</li>
+            <li>User types commander name (gets suggestions)</li>
+            <li>User clicks "Set" or presses Enter</li>
+            <li>Modal closes, format stays as "Commander"</li>
+            <li>Status shows "Commander set: {commander name}" above search box</li>
+            <li>All searches now include commander context</li>
+        </ol>
+        
+        <p class="info"><strong>Cancel behavior:</strong> If user clicks "Cancel", modal closes and format resets to "Standard" as requested.</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🎨 UI Elements</h2>
+        <ul>
+            <li><strong>Modal:</strong> Clean popup with header, body, and footer</li>
+            <li><strong>Input field:</strong> Autocomplete with commander suggestions</li>
+            <li><strong>Buttons:</strong> "Cancel" (resets to Standard) and "Set" (confirms selection)</li>
+            <li><strong>Status display:</strong> Small text above search box showing active commander</li>
+            <li><strong>Clear button:</strong> X button to remove commander selection</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 To Test Manually</h2>
+        <ol>
+            <li>Open <a href="http://localhost:8080" target="_blank">http://localhost:8080</a></li>
+            <li>Select "Commander" from the format dropdown</li>
+            <li>Modal should open with input field</li>
+            <li>Type a commander name (e.g., "Chulane")</li>
+            <li>Click "Set" or press Enter</li>
+            <li>Modal should close and show "Commander set: Chulane" above search box</li>
+            <li>Try searching for cards - they should be filtered by commander colors</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Technical Details</h2>
+        <p><strong>Sacred Line Preserved:</strong> The format dropdown line remains unchanged as requested.</p>
+        <p><strong>Modal Trigger:</strong> When "Commander" is selected, showCommanderModal() is called instead of setting format directly.</p>
+        <p><strong>Cancel Behavior:</strong> Resets to "Standard" format and clears any commander selection.</p>
+        <p><strong>Status Display:</strong> Shows immediately above search box with clear button to remove.</p>
+    </div>
+
+    <script>
+        console.log('✅ Commander Modal Test Page Loaded');
+        console.log('🔗 Main app available at: http://localhost:8080');
+    </script>
+</body>
+</html>

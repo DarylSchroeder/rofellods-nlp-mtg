@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dropdown Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .pass { background: #d4edda; color: #155724; }
+        .fail { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Search Dropdown Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        function runTests() {
+            const results = [];
+            
+            // Test 1: Check if HTML elements exist
+            const searchInput = document.getElementById('searchInput');
+            const searchDropdown = document.getElementById('searchDropdown');
+            const dropdownContent = document.getElementById('dropdownContent');
+            
+            results.push({
+                name: 'HTML Elements Exist',
+                pass: searchInput && searchDropdown && dropdownContent,
+                details: `searchInput: ${!!searchInput}, searchDropdown: ${!!searchDropdown}, dropdownContent: ${!!dropdownContent}`
+            });
+            
+            // Test 2: Check if CSS classes are applied
+            if (searchDropdown) {
+                const hasHiddenClass = searchDropdown.classList.contains('hidden');
+                const hasDropdownClass = searchDropdown.classList.contains('search-dropdown');
+                
+                results.push({
+                    name: 'CSS Classes Applied',
+                    pass: hasHiddenClass && hasDropdownClass,
+                    details: `hidden: ${hasHiddenClass}, search-dropdown: ${hasDropdownClass}`
+                });
+            }
+            
+            // Test 3: Check if JavaScript methods exist
+            const mtgSearchExists = typeof window.mtgSearch !== 'undefined';
+            const showDropdownExists = mtgSearchExists && typeof window.mtgSearch.showSearchDropdown === 'function';
+            const hideDropdownExists = mtgSearchExists && typeof window.mtgSearch.hideSearchDropdown === 'function';
+            
+            results.push({
+                name: 'JavaScript Methods Exist',
+                pass: showDropdownExists && hideDropdownExists,
+                details: `mtgSearch: ${mtgSearchExists}, showSearchDropdown: ${showDropdownExists}, hideSearchDropdown: ${hideDropdownExists}`
+            });
+            
+            // Display results
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = results.map(result => 
+                `<div class="test-result ${result.pass ? 'pass' : 'fail'}">
+                    <strong>${result.name}:</strong> ${result.pass ? 'PASS' : 'FAIL'}
+                    <br><small>${result.details}</small>
+                </div>`
+            ).join('');
+        }
+        
+        // Load the main page content to test
+        fetch('/')
+            .then(response => response.text())
+            .then(html => {
+                // Extract the body content and inject it
+                const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+                if (bodyMatch) {
+                    document.body.innerHTML = bodyMatch[1] + document.body.innerHTML;
+                    
+                    // Load the script
+                    const script = document.createElement('script');
+                    script.src = '/script.js';
+                    script.onload = () => {
+                        setTimeout(runTests, 100);
+                    };
+                    document.head.appendChild(script);
+                    
+                    // Load the styles
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = '/styles.css';
+                    document.head.appendChild(link);
+                }
+            })
+            .catch(error => {
+                document.getElementById('results').innerHTML = 
+                    `<div class="test-result fail">Error loading main page: ${error}</div>`;
+            });
+    </script>
+</body>
+</html>
