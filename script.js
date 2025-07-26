@@ -1,12 +1,17 @@
 class MTGSearch {
     constructor() {
-        this.apiUrl = 'https://mtg-nlp-search.onrender.com/search';
+        // Auto-detect environment and set appropriate API URL
+        this.apiUrl = this.getApiUrl();
         this.currentQuery = '';
         this.currentPage = 1;
         this.perPage = 50; // Changed default from 20 to 50
         this.currentFormat = 'ALL'; // Add format tracking
         this.viewMode = 'tiles'; // 'tiles' or 'text'
         this.lastScryfallCall = null; // Cache latest Scryfall API call for bug reports
+        
+        // Commander selection state
+        this.selectedCommander = null; // {name: "Muldrotha, the Gravetide", colors: "UBG"}
+        this.commanderCache = null; // Cache commander list from API
         
         // Load cached Scryfall call from localStorage
         try {
@@ -26,6 +31,36 @@ class MTGSearch {
         if (this.currentQuery) {
             this.performSearch();
         }
+    }
+
+    getApiUrl() {
+        const hostname = window.location.hostname;
+        const port = window.location.port;
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Allow manual override via URL parameter: ?api=local or ?api=prod
+        const apiOverride = urlParams.get('api');
+        if (apiOverride === 'local') {
+            console.log('🔧 Manual override: using localhost:8000 backend');
+            return 'http://localhost:8000/search';
+        }
+        if (apiOverride === 'prod') {
+            console.log('🔧 Manual override: using Render backend');
+            return 'https://mtg-nlp-search.onrender.com/search';
+        }
+        
+        // Local development detection
+        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
+            // Check if we're running on port 8080, 8081, or other typical dev ports
+            if (port === '8080' || port === '8081' || port === '3000' || port === '5000') {
+                console.log('🏠 Local development detected, using localhost:8000 backend');
+                return 'http://localhost:8000/search';  // Local backend
+            }
+        }
+        
+        // Production or other environments
+        console.log('🌐 Production environment detected, using Render backend');
+        return 'https://mtg-nlp-search.onrender.com/search';
     }
 
     // Load search state from URL parameters
@@ -128,14 +163,62 @@ class MTGSearch {
         this.searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 this.performSearch();
+                this.hideSearchDropdown();
+            }
+        });
+
+        // Search dropdown functionality
+        this.searchInput.addEventListener('focus', (e) => {
+            if (!e.target.value.trim()) {
+                this.showSearchDropdown();
+            }
+        });
+
+        this.searchInput.addEventListener('input', (e) => {
+            if (e.target.value.trim()) {
+                this.hideSearchDropdown();
+            } else {
+                this.showSearchDropdown();
+            }
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const searchBox = document.querySelector('.search-box');
+            if (!searchBox.contains(e.target)) {
+                this.hideSearchDropdown();
             }
         });
 
         // Format selector change event
         this.formatSelect.addEventListener('change', () => {
-            this.currentFormat = this.formatSelect.value;
-            this.performSearch(1); // Reset to page 1 when format changes
+            if (this.formatSelect.value === 'commander') {
+                this.showCommanderModal();
+            } else {
+                this.currentFormat = this.formatSelect.value;
+                this.clearCommander(); // Clear commander when switching away from commander format
+                this.performSearch(1); // Reset to page 1 when format changes
+            }
         });
+        
+        // Commander modal events
+        const commanderModalInput = document.getElementById('commanderModalInput');
+        if (commanderModalInput) {
+            commanderModalInput.addEventListener('input', (e) => this.handleCommanderModalInput(e));
+            commanderModalInput.addEventListener('focus', () => this.showCommanderModalSuggestions());
+            commanderModalInput.addEventListener('blur', () => {
+                // Delay hiding to allow clicking on suggestions
+                setTimeout(() => this.hideCommanderModalSuggestions(), 200);
+            });
+            commanderModalInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.setCommander();
+                } else if (e.key === 'Escape') {
+                    this.cancelCommanderSelection();
+                }
+            });
+        }
 
         // Focus on search input when page loads (unless we have a query from URL)
         if (!this.currentQuery) {
@@ -158,7 +241,174 @@ class MTGSearch {
                 hamburger.classList.remove('active');
                 menu.classList.remove('show');
             }
+            
+            // Handle clear commander button clicks using event delegation
+            if (e.target.classList.contains('clear-commander-text')) {
+                console.log('🎯 Clear commander button clicked via delegation');
+                this.clearCommander();
+            }
         });
+    }
+
+    // Commander Selection Methods
+    toggleCommanderSelector() {
+        const commanderSelector = document.getElementById('commanderSelector');
+        if (this.currentFormat === 'commander') {
+            commanderSelector.style.display = 'block';
+            this.loadCommanderCache(); // Load commanders if not cached
+        } else {
+            commanderSelector.style.display = 'none';
+            this.clearCommander(); // Clear selection when switching away from commander
+        }
+    }
+
+    async loadCommanderCache() {
+        if (this.commanderCache) return; // Already loaded
+        
+        try {
+            // Get base API URL (remove /search suffix)
+            const baseApiUrl = this.apiUrl.replace('/search', '');
+            
+            // Use full_names=true to get all commanders with proper names
+            const response = await fetch(`${baseApiUrl}/commanders?full_names=true`);
+            if (response.ok) {
+                this.commanderCache = await response.json();
+                console.log(`✅ Loaded ${this.commanderCache.length} commanders from API with full names`);
+            } else {
+                // Fallback to hardcoded list if API not available
+                this.commanderCache = this.getHardcodedCommanders();
+                console.log('⚠️ Using fallback commander list');
+            }
+        } catch (error) {
+            console.warn('Failed to load commanders from API, using fallback:', error);
+            this.commanderCache = this.getHardcodedCommanders();
+        }
+    }
+
+    getHardcodedCommanders() {
+        // Fallback commander list from query_builder.py
+        return [
+            {name: "Chulane, Teller of Tales", colors: "GWU"},
+            {name: "Alesha, Who Smiles at Death", colors: "RWB"},
+            {name: "Kenrith, the Returned King", colors: "WUBRG"},
+            {name: "Atraxa, Praetors' Voice", colors: "WUBG"},
+            {name: "Korvold, Fae-Cursed King", colors: "BRG"},
+            {name: "Muldrotha, the Gravetide", colors: "UBG"},
+            {name: "Edgar Markov", colors: "RWB"},
+            {name: "The Ur-Dragon", colors: "WUBRG"},
+            {name: "Meren of Clan Nel Toth", colors: "BG"},
+            {name: "Omnath, Locus of Creation", colors: "WUBRG"},
+            {name: "Niv-Mizzet, Parun", colors: "UR"},
+            {name: "Rhys the Redeemed", colors: "GW"}
+        ];
+    }
+
+    handleCommanderInput(event) {
+        const query = event.target.value.toLowerCase();
+        if (query.length < 2) {
+            this.hideCommanderSuggestions();
+            return;
+        }
+
+        const suggestions = this.commanderCache.filter(commander => 
+            commander.name.toLowerCase().includes(query)
+        ).slice(0, 8); // Limit to 8 suggestions
+
+        this.showCommanderSuggestions(suggestions);
+    }
+
+    showCommanderSuggestions(suggestions = []) {
+        const suggestionsDiv = document.getElementById('commanderSuggestions');
+        
+        if (suggestions.length === 0) {
+            suggestionsDiv.style.display = 'none';
+            return;
+        }
+
+        suggestionsDiv.innerHTML = suggestions.map(commander => `
+            <div class="commander-suggestion" onclick="mtgSearch.selectCommander('${commander.name}', '${commander.colors}')">
+                <span class="name">${commander.name}</span>
+                <span class="colors">${commander.colors}</span>
+            </div>
+        `).join('');
+        
+        suggestionsDiv.style.display = 'block';
+    }
+
+    hideCommanderSuggestions() {
+        const suggestionsDiv = document.getElementById('commanderSuggestions');
+        if (suggestionsDiv) {
+            suggestionsDiv.style.display = 'none';
+        }
+    }
+
+    selectCommander(name, colors) {
+        this.selectedCommander = {name, colors};
+        
+        // Update UI
+        const commanderInput = document.getElementById('commanderInput');
+        const selectedDiv = document.getElementById('selectedCommander');
+        
+        commanderInput.value = '';
+        commanderInput.style.display = 'none';
+        
+        selectedDiv.querySelector('.commander-name').textContent = name;
+        selectedDiv.querySelector('.commander-colors').textContent = colors;
+        selectedDiv.style.display = 'flex';
+        
+        this.hideCommanderSuggestions();
+        
+        // Re-run current search with commander colors
+        if (this.currentQuery) {
+            this.performSearch(1);
+        }
+        
+        console.log(`🎯 Selected commander: ${name} (${colors})`);
+    }
+
+    clearCommander() {
+        console.log('🎯 clearCommander() called');
+        console.log('Before clear:', {
+            selectedCommander: this.selectedCommander,
+            currentFormat: this.currentFormat
+        });
+        
+        this.selectedCommander = null;
+        
+        // Reset format to standard as requested
+        this.formatSelect.value = 'standard';
+        this.currentFormat = 'standard';
+        
+        console.log('After clear:', {
+            selectedCommander: this.selectedCommander,
+            currentFormat: this.currentFormat
+        });
+        
+        // Update UI
+        const commanderInput = document.getElementById('commanderInput');
+        const selectedDiv = document.getElementById('selectedCommander');
+        
+        if (commanderInput) {
+            commanderInput.value = '';
+            commanderInput.style.display = 'block';
+        }
+        
+        if (selectedDiv) {
+            selectedDiv.style.display = 'none';
+        }
+        
+        this.hideCommanderSuggestions();
+        
+        // Update commander status display
+        console.log('🔄 About to call updateCommanderStatusDisplay()');
+        this.updateCommanderStatusDisplay();
+        
+        // Re-run current search without commander colors (this will remove coloridentity filter)
+        if (this.currentQuery) {
+            this.performSearch(1);
+        }
+        
+        console.log('🎯 Cleared commander selection and reset format to standard');
     }
 
     async performSearch(page = 1) {
@@ -186,11 +436,22 @@ class MTGSearch {
                 searchQuery = `${query} format:${this.currentFormat}`;
             }
             
+            // Add commander color identity if selected
+            if (this.selectedCommander && this.currentFormat === 'commander') {
+                searchQuery = `${searchQuery} commander:${this.selectedCommander.name}`;
+                console.log(`🎯 Adding commander context: ${this.selectedCommander.name} (${this.selectedCommander.colors})`);
+            }
+            
             const params = new URLSearchParams({
                 prompt: searchQuery,
                 page: page.toString(),
                 per_page: this.perPage.toString()
             });
+            
+            // Add commander colors as explicit parameter for backend
+            if (this.selectedCommander && this.currentFormat === 'commander') {
+                params.append('commander_colors', this.selectedCommander.colors);
+            }
 
             const response = await fetch(`${this.apiUrl}?${params}`, {
                 // Add timeout for better error handling
@@ -1002,6 +1263,81 @@ ${scryfallInfo}
         sampleMenu.style.display = 'none';
     }
 
+    // Search dropdown functionality
+    showSearchDropdown() {
+        const dropdown = document.getElementById('searchDropdown');
+        if (dropdown) {
+            this.populateSearchDropdown();
+            dropdown.classList.remove('hidden');
+        }
+    }
+
+    hideSearchDropdown() {
+        const dropdown = document.getElementById('searchDropdown');
+        if (dropdown) {
+            dropdown.classList.add('hidden');
+        }
+    }
+
+    populateSearchDropdown() {
+        const dropdownContent = document.getElementById('dropdownContent');
+        if (!dropdownContent) return;
+
+        const sampleCategories = {
+            'Basic Searches': [
+                '1 mana counterspell',
+                'azorius removal',
+                'fetchland',
+                'shockland',
+                'ramp spell',
+                'card draw'
+            ],
+            'Mana Costs': [
+                '2 mana creature',
+                '3 cmc artifact',
+                'zero cost spell',
+                'X cost spell'
+            ],
+            'Colors & Guilds': [
+                'blue counterspell',
+                'white removal',
+                'simic ramp',
+                'orzhov removal',
+                'red burn'
+            ],
+            'Card Types': [
+                'legendary creature',
+                'artifact creature',
+                'instant or sorcery',
+                'planeswalker',
+                'enchantment'
+            ],
+            'Effects': [
+                'destroy target creature',
+                'draw cards',
+                'gain life',
+                'deal damage',
+                'tutor'
+            ]
+        };
+
+        let html = '';
+        for (const [category, searches] of Object.entries(sampleCategories)) {
+            html += `<div class="dropdown-category">${category}</div>`;
+            searches.forEach(search => {
+                html += `<div class="dropdown-item" onclick="mtgSearch.selectDropdownItem('${search.replace(/'/g, "\\'")}')">${search}</div>`;
+            });
+        }
+
+        dropdownContent.innerHTML = html;
+    }
+
+    selectDropdownItem(query) {
+        this.searchInput.value = query;
+        this.hideSearchDropdown();
+        this.performSearch();
+    }
+
     // Card Modal functionality
     openCardModal(card) {
         const modal = document.getElementById('cardModal');
@@ -1139,6 +1475,203 @@ ${cardDetails}
 *Search performed at: ${new Date().toISOString()}*`;
 
         this.openGitHubIssue(title, body);
+    }
+
+    // Commander Modal Methods
+    showCommanderModal() {
+        // Load commanders if not cached
+        this.loadCommanderCache();
+        
+        // Clear any previous input
+        const modalInput = document.getElementById('commanderModalInput');
+        const previewDiv = document.getElementById('selectedCommanderPreview');
+        const setBtn = document.getElementById('setCommanderBtn');
+        
+        modalInput.value = '';
+        previewDiv.style.display = 'none';
+        setBtn.disabled = true;
+        
+        // Show modal
+        const modal = document.getElementById('commanderModal');
+        modal.style.display = 'block';
+        
+        // Focus on input
+        setTimeout(() => modalInput.focus(), 100);
+    }
+
+    cancelCommanderSelection() {
+        // Hide modal
+        const modal = document.getElementById('commanderModal');
+        modal.style.display = 'none';
+        
+        // Reset format selector to 'standard' as requested
+        this.formatSelect.value = 'standard';
+        this.currentFormat = 'standard';
+        
+        // Clear any commander selection
+        this.clearCommander();
+        
+        // Perform search with new format
+        if (this.currentQuery) {
+            this.performSearch(1);
+        }
+    }
+
+    setCommander() {
+        const modalInput = document.getElementById('commanderModalInput');
+        const commanderName = modalInput.value.trim();
+        
+        if (!commanderName) {
+            return;
+        }
+        
+        // Find commander in cache
+        const commander = this.commanderCache?.find(c => 
+            c.name.toLowerCase() === commanderName.toLowerCase()
+        );
+        
+        if (!commander) {
+            // If not found in cache, still allow it (user might know a commander not in our list)
+            // We'll let the backend handle validation
+            this.selectedCommander = {
+                name: commanderName,
+                colors: 'WUBRG' // Default to all colors if unknown
+            };
+        } else {
+            this.selectedCommander = commander;
+        }
+        
+        // Set format to commander
+        this.currentFormat = 'commander';
+        this.formatSelect.value = 'commander';
+        
+        // Update commander status display
+        this.updateCommanderStatusDisplay();
+        
+        // Hide modal
+        const modal = document.getElementById('commanderModal');
+        modal.style.display = 'none';
+        
+        // Perform search with commander context
+        if (this.currentQuery) {
+            this.performSearch(1);
+        }
+        
+        console.log(`🎯 Commander set: ${this.selectedCommander.name} (${this.selectedCommander.colors})`);
+    }
+
+    handleCommanderModalInput(event) {
+        const query = event.target.value.toLowerCase().trim();
+        const previewDiv = document.getElementById('selectedCommanderPreview');
+        const setBtn = document.getElementById('setCommanderBtn');
+        
+        if (query.length < 2) {
+            this.hideCommanderModalSuggestions();
+            previewDiv.style.display = 'none';
+            setBtn.disabled = true;
+            return;
+        }
+
+        // Find exact match first
+        const exactMatch = this.commanderCache?.find(commander => 
+            commander.name.toLowerCase() === query
+        );
+        
+        if (exactMatch) {
+            // Show preview for exact match
+            document.getElementById('previewCommanderName').textContent = exactMatch.name;
+            document.getElementById('previewCommanderColors').textContent = exactMatch.colors;
+            previewDiv.style.display = 'block';
+            setBtn.disabled = false;
+        } else {
+            // Show suggestions for partial matches
+            const suggestions = this.commanderCache?.filter(commander => 
+                commander.name.toLowerCase().includes(query)
+            ).slice(0, 8) || [];
+            
+            this.showCommanderModalSuggestions(suggestions);
+            
+            // Enable set button if there's any text (allows custom commanders)
+            setBtn.disabled = query.length === 0;
+            previewDiv.style.display = 'none';
+        }
+    }
+
+    showCommanderModalSuggestions(suggestions = []) {
+        const suggestionsDiv = document.getElementById('commanderModalSuggestions');
+        
+        if (suggestions.length === 0) {
+            suggestionsDiv.style.display = 'none';
+            return;
+        }
+
+        suggestionsDiv.innerHTML = suggestions.map(commander => `
+            <div class="commander-suggestion" onclick="mtgSearch.selectCommanderFromModal('${commander.name}', '${commander.colors}')">
+                <span class="name">${commander.name}</span>
+                <span class="colors">${commander.colors}</span>
+            </div>
+        `).join('');
+        
+        suggestionsDiv.style.display = 'block';
+    }
+
+    hideCommanderModalSuggestions() {
+        const suggestionsDiv = document.getElementById('commanderModalSuggestions');
+        if (suggestionsDiv) {
+            suggestionsDiv.style.display = 'none';
+        }
+    }
+
+    selectCommanderFromModal(name, colors) {
+        const modalInput = document.getElementById('commanderModalInput');
+        const previewDiv = document.getElementById('selectedCommanderPreview');
+        const setBtn = document.getElementById('setCommanderBtn');
+        
+        // Set input value
+        modalInput.value = name;
+        
+        // Show preview
+        document.getElementById('previewCommanderName').textContent = name;
+        document.getElementById('previewCommanderColors').textContent = colors;
+        previewDiv.style.display = 'block';
+        
+        // Enable set button
+        setBtn.disabled = false;
+        
+        // Hide suggestions
+        this.hideCommanderModalSuggestions();
+    }
+
+    updateCommanderStatusDisplay() {
+        const statusDiv = document.getElementById('commanderStatus');
+        const statusName = document.getElementById('commanderStatusName');
+        
+        console.log('🔍 updateCommanderStatusDisplay called:', {
+            selectedCommander: this.selectedCommander,
+            currentFormat: this.currentFormat,
+            shouldShow: this.selectedCommander && this.currentFormat === 'commander'
+        });
+        
+        if (this.selectedCommander && this.currentFormat === 'commander') {
+            statusName.textContent = this.selectedCommander.name;
+            statusDiv.style.display = 'block';
+            console.log('✅ Showing commander status:', this.selectedCommander.name);
+            
+            // Add event listener to the clear button when status is shown
+            const clearBtn = statusDiv.querySelector('.clear-commander-text');
+            if (clearBtn) {
+                // Remove any existing listener first
+                clearBtn.onclick = null;
+                // Add new listener
+                clearBtn.onclick = () => {
+                    console.log('🎯 Clear commander X clicked directly');
+                    this.clearCommander();
+                };
+            }
+        } else {
+            statusDiv.style.display = 'none';
+            console.log('❌ Hiding commander status');
+        }
     }
 }
 

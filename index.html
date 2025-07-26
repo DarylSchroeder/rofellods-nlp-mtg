@@ -40,34 +40,78 @@
         <!-- Search Section -->
         <div class="search-section">
             <div class="search-container">
-                <div class="search-box">
-                    <input type="text" 
-                           id="searchInput" 
-                           placeholder="Search for Magic cards... (e.g., '1 mana counterspell', 'azorius removal', 'fetchland')"
-                           autocomplete="off">
-                    <button id="searchButton" class="search-btn">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <path d="m21 21-4.35-4.35"></path>
-                        </svg>
-                    </button>
+                <!-- Commander Status Display -->
+                <div id="commanderStatus" class="commander-status" style="display: none;">
+                    Commander set: <span id="commanderStatusName"></span>
+                    <span class="clear-commander-text" title="Clear commander">X</span>
                 </div>
-                <div class="search-controls">
-                    <div class="format-selector">
-                        <label for="formatSelect">Format:</label>
-                        <select id="formatSelect">
-                            <option value="ALL">ALL</option>
-                            <option value="standard">Standard</option>
-                            <option value="commander">Commander</option>
-                            <option value="modern">Modern</option>
-                            <option value="pioneer">Pioneer</option>
-                            <option value="legacy">Legacy</option>
-                            <option value="pauper">Pauper</option>
-                        </select>
+                
+                <div class="search-row">
+                    <div class="search-box">
+                        <input type="text" 
+                               id="searchInput" 
+                               placeholder="Search for Magic cards... (e.g., '1 mana counterspell', 'azorius removal', 'fetchland')"
+                               autocomplete="off">
+                        <div id="searchDropdown" class="search-dropdown hidden">
+                            <div class="dropdown-header">Sample Searches</div>
+                            <div id="dropdownContent" class="dropdown-content">
+                                <!-- Sample queries will be populated here -->
+                            </div>
+                        </div>
+                        <button id="searchButton" class="search-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                        </button>
                     </div>
-                    <button class="report-search-btn" onclick="mtgSearch.reportSearchIssue(mtgSearch.currentQuery, mtgSearch.currentPage)" title="Report Search Issue">
-                        🐛
-                    </button>
+                    <div class="search-controls">
+                        <div class="format-selector">
+                            <label for="formatSelect">Format:</label>
+                            <select id="formatSelect">
+                                <option value="ALL">ALL</option>
+                                <option value="standard">Standard</option>
+                                <option value="commander">Commander</option>
+                                <option value="modern">Modern</option>
+                                <option value="pioneer">Pioneer</option>
+                                <option value="legacy">Legacy</option>
+                                <option value="pauper">Pauper</option>
+                            </select>
+                        </div>
+                        
+
+                        <button class="report-search-btn" onclick="mtgSearch.reportSearchIssue(mtgSearch.currentQuery, mtgSearch.currentPage)" title="Report Search Issue">
+                            🐛
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Commander Selection Modal -->
+        <div id="commanderModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Select Commander</h3>
+                </div>
+                <div class="modal-body">
+                    <p>Choose your commander to filter all searches by its color identity:</p>
+                    <div class="commander-input-container">
+                        <input type="text" 
+                               id="commanderModalInput" 
+                               placeholder="Type commander name (e.g., Muld...)" 
+                               autocomplete="off">
+                        <div class="commander-suggestions" id="commanderModalSuggestions"></div>
+                    </div>
+                    <div id="selectedCommanderPreview" class="selected-commander-preview" style="display: none;">
+                        <strong>Selected:</strong> 
+                        <span id="previewCommanderName"></span> 
+                        (<span id="previewCommanderColors"></span>)
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="mtgSearch.cancelCommanderSelection()">Cancel</button>
+                    <button class="btn btn-primary" id="setCommanderBtn" onclick="mtgSearch.setCommander()" disabled>Set</button>
                 </div>
             </div>
         </div>
@@ -103,7 +147,7 @@
     </div>
 
     <!-- About Modal -->
-    <div id="aboutModal" class="modal">
+    <div id="aboutModal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close" onclick="mtgSearch.closeModal('aboutModal')">&times;</span>
             <h2>About MTG NLP Search</h2>
@@ -127,7 +171,7 @@
     </div>
 
     <!-- Contact Modal -->
-    <div id="contactModal" class="modal">
+    <div id="contactModal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close" onclick="mtgSearch.closeModal('contactModal')">&times;</span>
             <h2>Contact Us</h2>
