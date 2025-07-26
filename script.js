@@ -3,7 +3,7 @@ class MTGSearch {
         this.apiUrl = 'https://mtg-nlp-search.onrender.com/search';
         this.currentQuery = '';
         this.currentPage = 1;
-        this.perPage = 20;
+        this.perPage = 50; // Changed default from 20 to 50
         this.currentFormat = 'ALL'; // Add format tracking
         this.viewMode = 'tiles'; // 'tiles' or 'text'
         this.lastScryfallCall = null; // Cache latest Scryfall API call for bug reports
@@ -85,7 +85,7 @@ class MTGSearch {
             params.set('page', this.currentPage.toString());
         }
         
-        if (this.perPage !== 20) {
+        if (this.perPage !== 50) { // Changed default from 20 to 50
             params.set('per_page', this.perPage.toString());
         }
         
@@ -317,6 +317,7 @@ class MTGSearch {
                         <option value="20" ${this.perPage === 20 ? 'selected' : ''}>20</option>
                         <option value="50" ${this.perPage === 50 ? 'selected' : ''}>50</option>
                         <option value="100" ${this.perPage === 100 ? 'selected' : ''}>100</option>
+                        <option value="250" ${this.perPage === 250 ? 'selected' : ''}>250</option>
                     </select>
                 </div>
             </div>
@@ -453,8 +454,11 @@ class MTGSearch {
             paginationDiv.appendChild(nextBtn);
         }
 
-        // Add pagination to results
-        this.results.appendChild(paginationDiv);
+        // Add pagination to top-right of results
+        const paginationTop = document.querySelector('.results-pagination-top');
+        if (paginationTop) {
+            paginationTop.appendChild(paginationDiv);
+        }
     }
 
     createPageButton(text, pageNum) {
@@ -463,7 +467,11 @@ class MTGSearch {
         button.className = 'pagination-btn';
         button.addEventListener('click', () => {
             this.performSearch(pageNum);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Scroll to top of results container instead of whole page
+            const resultsContainer = document.querySelector('.results-container');
+            if (resultsContainer) {
+                resultsContainer.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         });
         return button;
     }

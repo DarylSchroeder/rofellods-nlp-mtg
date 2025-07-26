@@ -9,8 +9,12 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header with Logo and Navigation -->
+        <!-- Header with Logo in top-left and Navigation -->
         <header class="header">
+            <div class="header-left">
+                <img src="https://static.wixstatic.com/media/e4ada0_cd8c288a3fd94904afa503d34b44eed0~mv2.png/v1/fill/w_141,h_141,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Logo%20for%20RofelloDS.png" 
+                     alt="RofelloDS Logo" class="logo">
+            </div>
             <div class="nav-container">
                 <button class="hamburger-btn" onclick="mtgSearch.toggleMenu()">
                     <span></span>
@@ -31,9 +35,6 @@
                     <a href="404.html">Just for fun... 🎭</a>
                 </nav>
             </div>
-            <img src="https://static.wixstatic.com/media/e4ada0_cd8c288a3fd94904afa503d34b44eed0~mv2.png/v1/fill/w_141,h_141,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Logo%20for%20RofelloDS.png" 
-                 alt="RofelloDS Logo" class="logo">
-            <h1 class="title">MTG Card Search</h1>
         </header>
 
         <!-- Search Section -->
@@ -51,17 +52,22 @@
                         </svg>
                     </button>
                 </div>
-                <div class="format-selector">
-                    <label for="formatSelect">Format:</label>
-                    <select id="formatSelect">
-                        <option value="ALL">ALL</option>
-                        <option value="standard">Standard</option>
-                        <option value="commander">Commander</option>
-                        <option value="modern">Modern</option>
-                        <option value="pioneer">Pioneer</option>
-                        <option value="legacy">Legacy</option>
-                        <option value="pauper">Pauper</option>
-                    </select>
+                <div class="search-controls">
+                    <div class="format-selector">
+                        <label for="formatSelect">Format:</label>
+                        <select id="formatSelect">
+                            <option value="ALL">ALL</option>
+                            <option value="standard">Standard</option>
+                            <option value="commander">Commander</option>
+                            <option value="modern">Modern</option>
+                            <option value="pioneer">Pioneer</option>
+                            <option value="legacy">Legacy</option>
+                            <option value="pauper">Pauper</option>
+                        </select>
+                    </div>
+                    <button class="report-search-btn" onclick="mtgSearch.reportSearchIssue(mtgSearch.currentQuery, mtgSearch.currentPage)">
+                        🐛 Report Search Issue
+                    </button>
                 </div>
             </div>
         </div>
@@ -76,16 +82,18 @@
         <div id="results" class="results-section hidden">
             <div class="results-header">
                 <span id="resultsCount"></span>
+                <div class="results-pagination-top">
+                    <!-- Pagination will be inserted here -->
+                </div>
             </div>
-            <div id="cardResults" class="card-results"></div>
+            <div class="results-container">
+                <div id="cardResults" class="card-results"></div>
+            </div>
         </div>
 
         <!-- No Results -->
         <div id="noResults" class="no-results hidden">
             <p>No cards found. Try a different search term.</p>
-            <button class="report-search-btn" onclick="mtgSearch.reportSearchIssue(mtgSearch.currentQuery, mtgSearch.currentPage)">
-                🐛 Report Search Issue
-            </button>
         </div>
 
         <!-- Error Message -->
